@@ -18,7 +18,6 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
   kotlin("jvm") version "1.4.10"
-  kotlin("kapt") version "1.4.10"
   id("org.jetbrains.dokka") version "1.4.10"
   id("com.diffplug.spotless") version "5.6.0"
   id("com.vanniktech.maven.publish") version "0.13.0"
@@ -82,7 +81,6 @@ dependencies {
   implementation("com.google.code.gson:gson:2.8.6")
   implementation("com.squareup.moshi:moshi:$moshiVersion")
 
-  kaptTest("com.squareup.moshi:moshi-kotlin-codegen:$moshiVersion")
   testImplementation("com.squareup.moshi:moshi-kotlin:$moshiVersion")
   testImplementation("junit:junit:4.13")
   testImplementation("com.google.truth:truth:1.0.1")
