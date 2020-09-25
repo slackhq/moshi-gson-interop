@@ -88,7 +88,7 @@ private fun Class<*>.shouldUseMoshi(): Boolean {
  * [extraMoshiConfig] can be configured optionally to add anything to the builder _after_ the interop factory is
  * added, which is useful for testing.
  */
-fun wireMoshiGsonInterop(
+public fun wireMoshiGsonInterop(
   seedMoshi: Moshi,
   seedGson: Gson,
   extraMoshiConfig: (Moshi.Builder) -> Unit = {}
