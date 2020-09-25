@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import io.gitlab.arturbosch.detekt.Detekt
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
@@ -21,6 +22,7 @@ plugins {
   id("org.jetbrains.dokka") version "1.4.10"
   id("com.diffplug.spotless") version "5.6.0"
   id("com.vanniktech.maven.publish") version "0.13.0"
+  id("io.gitlab.arturbosch.detekt") version "1.13.1"
 }
 
 repositories {
@@ -28,8 +30,6 @@ repositories {
   // Until Moshi 1.11.0 is released
   maven("https://oss.sonatype.org/content/repositories/snapshots")
 }
-
-// TODO spotless, uploading snapshots, target moshi snapshots
 
 java {
   sourceCompatibility = JavaVersion.VERSION_1_8
@@ -41,6 +41,10 @@ tasks.withType<KotlinCompile>().configureEach {
     jvmTarget = "1.8"
     freeCompilerArgs = listOf("-progressive")
   }
+}
+
+tasks.withType<Detekt>().configureEach {
+  jvmTarget = "1.8"
 }
 
 spotless {
