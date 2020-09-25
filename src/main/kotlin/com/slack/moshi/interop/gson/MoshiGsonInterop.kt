@@ -121,8 +121,7 @@ private class MoshiGsonInteropJsonAdapterFactory(
   private val interop: MoshiGsonInterop
 ) : JsonAdapter.Factory {
   override fun create(type: Type, annotations: Set<Annotation>, moshi: Moshi): JsonAdapter<*>? {
-    if (annotations.isNotEmpty()) return null
-    if (type !is Class<*>) return null
+    if (annotations.isNotEmpty() || type !is Class<*>) return null
     return if (type.shouldUseMoshi()) {
       moshi.nextAdapter<Any>(this, type, annotations)
     } else {
