@@ -1,6 +1,7 @@
 plugins {
   kotlin("jvm") version "1.4.10"
   kotlin("kapt") version "1.4.10"
+  id("com.diffplug.spotless") version "5.6.0"
 }
 
 repositories {
@@ -20,6 +21,30 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach 
   kotlinOptions {
     jvmTarget = "1.8"
     freeCompilerArgs = listOf("-progressive")
+  }
+}
+
+spotless {
+  format("misc") {
+    target("*.md", ".gitignore")
+    trimTrailingWhitespace()
+    endWithNewline()
+  }
+  val ktlintVersion = "0.38.1"
+  val ktlintUserData = mapOf("indent_size" to "2", "continuation_indent_size" to "2")
+  kotlin {
+    target("**/*.kt")
+    ktlint(ktlintVersion).userData(ktlintUserData)
+    trimTrailingWhitespace()
+    endWithNewline()
+    licenseHeaderFile("spotless/spotless.kt")
+    targetExclude("**/spotless.kt")
+  }
+  kotlinGradle {
+    ktlint(ktlintVersion).userData(ktlintUserData)
+    trimTrailingWhitespace()
+    endWithNewline()
+    licenseHeaderFile("spotless/spotless.kt", "(import|plugins|buildscript|dependencies|pluginManagement)")
   }
 }
 
