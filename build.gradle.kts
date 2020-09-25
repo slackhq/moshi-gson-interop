@@ -1,7 +1,11 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 plugins {
   kotlin("jvm") version "1.4.10"
   kotlin("kapt") version "1.4.10"
+  id("org.jetbrains.dokka") version "1.4.10"
   id("com.diffplug.spotless") version "5.6.0"
+  id("com.vanniktech.maven.publish") version "0.13.0"
 }
 
 repositories {
@@ -17,7 +21,7 @@ java {
   targetCompatibility = JavaVersion.VERSION_1_8
 }
 
-tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+tasks.withType<KotlinCompile>().configureEach {
   kotlinOptions {
     jvmTarget = "1.8"
     freeCompilerArgs = listOf("-progressive")
