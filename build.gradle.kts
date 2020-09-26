@@ -31,11 +31,19 @@ repositories {
   mavenCentral()
   // Until Moshi 1.11.0 is released
   maven("https://oss.sonatype.org/content/repositories/snapshots")
-  jcenter().mavenContent {
-    // Required for Dokka
-    includeModule("org.jetbrains.kotlinx", "kotlinx-html-jvm")
-    includeGroup("org.jetbrains.dokka")
-    includeModule("org.jetbrains", "markdown")
+  exclusiveContent {
+    forRepository {
+      maven {
+        name = "JCenter"
+        setUrl("https://jcenter.bintray.com/")
+      }
+    }
+    filter {
+      // Required for Dokka
+      includeModule("org.jetbrains.kotlinx", "kotlinx-html-jvm")
+      includeGroup("org.jetbrains.dokka")
+      includeModule("org.jetbrains", "markdown")
+    }
   }
 }
 
