@@ -17,7 +17,9 @@ package com.slack.moshi.interop.gson
 
 import com.google.common.truth.Truth.assertThat
 import com.google.gson.GsonBuilder
+import com.google.gson.TypeAdapter
 import com.google.gson.annotations.SerializedName
+import com.google.gson.reflect.TypeToken
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Moshi
@@ -185,8 +187,28 @@ class MoshiGsonInteropTest {
     assertThat(secondInstance).isEqualTo(complexInstance)
   }
 
-  // TODO
-  //  collections of enums
+  @Test
+  fun moshiEnumCollections() {
+    val adapter = moshi.adapter<List<MoshiEnum>>()
+    val expected = listOf(MoshiEnum.TYPE)
+    val json = "[\"_type\"]"
+    val instance = adapter.fromJson(json)
+    assertThat(instance).isEqualTo(expected)
+    val serialized = adapter.toJson(expected)
+    assertThat(json == serialized)
+  }
+
+  @Test
+  fun gsonEnumCollections() {
+    @Suppress("UNCHECKED_CAST")
+    val adapter = gson.getAdapter(TypeToken.getParameterized(List::class.java, GsonEnum::class.java)) as TypeAdapter<List<GsonEnum>>
+    val expected = listOf(GsonEnum.TYPE)
+    val json = "[\"__type\"]"
+    val instance = adapter.fromJson(json)
+    assertThat(instance).isEqualTo(expected)
+    val serialized = adapter.toJson(expected)
+    assertThat(json == serialized)
+  }
 }
 
 @JsonClass(generateAdapter = true)
