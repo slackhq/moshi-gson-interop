@@ -43,7 +43,6 @@ java {
 
 tasks.withType<KotlinCompile>().configureEach {
   val isTest = name == "compileTestKotlin"
-  println(name)
   kotlinOptions {
     jvmTarget = "1.8"
     val argsList = mutableListOf("-progressive")
