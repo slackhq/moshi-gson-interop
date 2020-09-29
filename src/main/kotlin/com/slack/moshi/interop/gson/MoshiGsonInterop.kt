@@ -36,18 +36,17 @@ import com.google.gson.stream.JsonReader as GsonReader
 import com.google.gson.stream.JsonWriter as GsonWriter
 
 /**
- * Wires together a seed [Moshi] and [Gson] instance for interop. This should be called with the final versions of the
- * input instances and then the returned instances should be used.
+ * Connects this [Moshi] instance to a [Gson] instance for interop. This should be called with the
+ * final versions of the input instances and then the returned instances should be used.
  *
  * [extraMoshiConfig] can be configured optionally to add anything to the builder _after_ the interop factory is
  * added, which is useful for testing.
  */
-public fun wireMoshiGsonInterop(
-  seedMoshi: Moshi,
-  seedGson: Gson,
+public fun Moshi.interopWith(
+  gson: Gson,
   extraMoshiConfig: (Moshi.Builder) -> Unit = {}
 ): Pair<Moshi, Gson> {
-  val interop = MoshiGsonInterop(seedMoshi, seedGson, extraMoshiConfig)
+  val interop = MoshiGsonInterop(this, gson, extraMoshiConfig)
   return interop.moshi to interop.gson
 }
 

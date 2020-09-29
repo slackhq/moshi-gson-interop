@@ -29,12 +29,10 @@ import dev.zacsweers.moshix.adapter
 import org.junit.Test
 
 class MoshiGsonInteropTest {
-  private val interop = wireMoshiGsonInterop(
-    seedMoshi = Moshi.Builder().build(),
-    seedGson = GsonBuilder().create()
-  ) {
-    it.add(KotlinJsonAdapterFactory())
-  }
+  private val interop = Moshi.Builder().build()
+    .interopWith(GsonBuilder().create()) {
+      it.add(KotlinJsonAdapterFactory())
+    }
   private val moshi = interop.first
   private val gson = interop.second
 
