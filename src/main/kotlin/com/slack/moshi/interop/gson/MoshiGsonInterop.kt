@@ -68,9 +68,8 @@ private fun Class<*>.shouldUseMoshi(): Boolean {
       // If it has no Gson @SerializedName annotations, we can use Moshi
       @Suppress("UNCHECKED_CAST")
       val constants: Array<out Enum<*>> = enumConstants as Array<out Enum<*>>
-      for (i in constants.indices) {
-        val constantName = constants[i].name
-        if (getField(constantName).isAnnotationPresent(SerializedName::class.java)) {
+      for (constant in constants) {
+        if (getField(constant.name).isAnnotationPresent(SerializedName::class.java)) {
           // Return early
           return false
         }
