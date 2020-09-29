@@ -23,6 +23,7 @@ import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.internal.NullSafeJsonAdapter
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
+import dev.zacsweers.moshix.adapter
 import org.junit.Test
 
 class MoshiGsonInteropTest {
@@ -95,7 +96,7 @@ class MoshiGsonInteropTest {
 
   @Test
   fun simpleMoshiDelegation() {
-    val gsonClassAdapter = moshi.adapter(SimpleGsonClass::class.java)
+    val gsonClassAdapter = moshi.adapter<SimpleGsonClass>()
     check(gsonClassAdapter is NullSafeJsonAdapter)
     val delegate = gsonClassAdapter.delegate()
     check(delegate is GsonDelegatingJsonAdapter)
@@ -120,7 +121,7 @@ class MoshiGsonInteropTest {
 
   @Test
   fun integrationMoshi() {
-    val adapter = moshi.adapter(MoshiClass::class.java)
+    val adapter = moshi.adapter<MoshiClass>()
     val instance = adapter.fromJson(integrationJson)!!
     val expected = MoshiClass(
       SimpleMoshiClass("moshi!"),
@@ -166,7 +167,7 @@ class MoshiGsonInteropTest {
 
   @Test
   fun complexMoshi() {
-    val adapter = moshi.adapter(Complex::class.java)
+    val adapter = moshi.adapter<Complex>()
     val instance = adapter.fromJson(complexJson)!!
     assertThat(instance).isEqualTo(complexInstance)
     val serialized = adapter.toJson(instance)

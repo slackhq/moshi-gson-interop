@@ -42,10 +42,16 @@ java {
 }
 
 tasks.withType<KotlinCompile>().configureEach {
+  val isTest = name == "compileTestKotlin"
+  println(name)
   kotlinOptions {
     jvmTarget = "1.8"
+    val argsList = mutableListOf("-progressive")
+    if (isTest) {
+      argsList.add("-Xopt-in=kotlin.ExperimentalStdlibApi")
+    }
     @Suppress("SuspiciousCollectionReassignment")
-    freeCompilerArgs += listOf("-progressive")
+    freeCompilerArgs += argsList
   }
 }
 
@@ -86,6 +92,7 @@ dependencies {
   implementation("com.google.code.gson:gson:2.8.6")
   implementation("com.squareup.moshi:moshi:$moshiVersion")
 
+  testImplementation("dev.zacsweers.moshix:moshi-ktx:0.3.0")
   testImplementation("com.squareup.moshi:moshi-kotlin:$moshiVersion")
   testImplementation("junit:junit:4.13")
   testImplementation("com.google.truth:truth:1.0.1")
