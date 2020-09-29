@@ -35,6 +35,38 @@ import java.lang.reflect.Type
 import com.google.gson.stream.JsonReader as GsonReader
 import com.google.gson.stream.JsonWriter as GsonWriter
 
+/**
+ * Wires together a seed [Moshi] and [Gson] instance for interop. This should be called with the final versions of the
+ * input instances and then the returned instances should be used.
+ *
+ * [extraMoshiConfig] can be configured optionally to add anything to the builder _after_ the interop factory is
+ * added, which is useful for testing.
+ */
+public fun wireMoshiGsonInterop(
+  seedMoshi: Moshi,
+  seedGson: Gson,
+  extraMoshiConfig: (Moshi.Builder) -> Unit = {}
+): Pair<Moshi, Gson> {
+  val interop = MoshiGsonInterop(seedMoshi, seedGson, extraMoshiConfig)
+  return interop.moshi to interop.gson
+}
+
+private class MoshiGsonInterop(
+  seedMoshi: Moshi,
+  seedGson: Gson,
+  extraMoshiConfig: (Moshi.Builder) -> Unit
+) {
+
+  val moshi: Moshi = seedMoshi.newBuilder()
+    .add(MoshiGsonInteropJsonAdapterFactory(this))
+    .apply(extraMoshiConfig)
+    .build()
+
+  val gson: Gson = seedGson.newBuilder()
+    .registerTypeAdapterFactory(MoshiGsonInteropTypeAdapterFactory(this))
+    .create()
+}
+
 private val MOSHI_BUILTIN_TYPES = setOf(
   Boolean::class.javaPrimitiveType,
   Boolean::class.javaObjectType,
@@ -78,38 +110,6 @@ private fun Class<*>.shouldUseMoshi(): Boolean {
     }
     else -> false
   }
-}
-
-/**
- * Wires together a seed [Moshi] and [Gson] instance for interop. This should be called with the final versions of the
- * input instances and then the returned instances should be used.
- *
- * [extraMoshiConfig] can be configured optionally to add anything to the builder _after_ the interop factory is
- * added, which is useful for testing.
- */
-public fun wireMoshiGsonInterop(
-  seedMoshi: Moshi,
-  seedGson: Gson,
-  extraMoshiConfig: (Moshi.Builder) -> Unit = {}
-): Pair<Moshi, Gson> {
-  val interop = MoshiGsonInterop(seedMoshi, seedGson, extraMoshiConfig)
-  return interop.moshi to interop.gson
-}
-
-private class MoshiGsonInterop(
-  seedMoshi: Moshi,
-  seedGson: Gson,
-  extraMoshiConfig: (Moshi.Builder) -> Unit
-) {
-
-  val moshi: Moshi = seedMoshi.newBuilder()
-    .add(MoshiGsonInteropJsonAdapterFactory(this))
-    .apply(extraMoshiConfig)
-    .build()
-
-  val gson: Gson = seedGson.newBuilder()
-    .registerTypeAdapterFactory(MoshiGsonInteropTypeAdapterFactory(this))
-    .create()
 }
 
 /**
