@@ -44,25 +44,68 @@ import com.google.gson.stream.JsonWriter as GsonWriter
  */
 public fun Moshi.interopWith(
   gson: Gson,
+  moshiClassChecker: MoshiClassChecker = DefaultMoshiClassChecker,
   moshiBuildHook: (Moshi.Builder) -> Unit = {}
 ): Pair<Moshi, Gson> {
-  val interop = MoshiGsonInterop(this, gson, moshiBuildHook)
+  val interop = MoshiGsonInterop(this, gson, moshiClassChecker, moshiBuildHook)
   return interop.moshi to interop.gson
+}
+
+/** A simple functional interface for indicating when a class should be serialized with Moshi. */
+public fun interface MoshiClassChecker {
+  /**
+   * Returns true if [rawType] should be serialized with Moshi or false if it should be serialized
+   * with Gson.
+   */
+  public fun shouldUseMoshi(rawType: Class<*>): Boolean
+}
+
+/**
+ * The default [MoshiClassChecker] behavior. This checks a few things when deciding:
+ * * Is it a "built in" type like primitives or String? -> Moshi
+ * * Is it annotated with [@JsonClass][JsonClass]? -> Moshi
+ * * Is it an enum with no [@SerializedName][SerializedName]-annotated members? -> Moshi
+ * * Else -> Gson
+ */
+//TODO should we check for @FromJson/@ToJson classes?
+public object DefaultMoshiClassChecker : MoshiClassChecker {
+  override fun shouldUseMoshi(rawType: Class<*>): Boolean {
+    return when {
+      // Moshi can handle all these natively
+      rawType in MOSHI_BUILTIN_TYPES -> true
+      // It's a moshi type, let Moshi handle it
+      rawType.isAnnotationPresent(JsonClass::class.java) -> true
+      rawType.isEnum -> {
+        // If it has no Gson @SerializedName annotations, we can use Moshi
+        @Suppress("UNCHECKED_CAST")
+        val constants: Array<out Enum<*>> = rawType.enumConstants as Array<out Enum<*>>
+        for (constant in constants) {
+          if (rawType.getField(constant.name).isAnnotationPresent(SerializedName::class.java)) {
+            // Return early
+            return false
+          }
+        }
+        true
+      }
+      else -> false
+    }
+  }
 }
 
 private class MoshiGsonInterop(
   seedMoshi: Moshi,
   seedGson: Gson,
+  moshiClassChecker: MoshiClassChecker,
   moshiBuildHook: (Moshi.Builder) -> Unit
 ) {
 
   val moshi: Moshi = seedMoshi.newBuilder()
-    .add(MoshiGsonInteropJsonAdapterFactory(this))
+    .add(MoshiGsonInteropJsonAdapterFactory(this, moshiClassChecker))
     .apply(moshiBuildHook)
     .build()
 
   val gson: Gson = seedGson.newBuilder()
-    .registerTypeAdapterFactory(MoshiGsonInteropTypeAdapterFactory(this))
+    .registerTypeAdapterFactory(MoshiGsonInteropTypeAdapterFactory(this, moshiClassChecker))
     .create()
 }
 
@@ -89,38 +132,17 @@ private val MOSHI_BUILTIN_TYPES = setOf(
   Any::class.java
 )
 
-private fun Class<*>.shouldUseMoshi(): Boolean {
-  return when {
-    // Moshi can handle all these natively
-    this in MOSHI_BUILTIN_TYPES -> true
-    // It's a moshi type, let Moshi handle it
-    isAnnotationPresent(JsonClass::class.java) -> true
-    isEnum -> {
-      // If it has no Gson @SerializedName annotations, we can use Moshi
-      @Suppress("UNCHECKED_CAST")
-      val constants: Array<out Enum<*>> = enumConstants as Array<out Enum<*>>
-      for (constant in constants) {
-        if (getField(constant.name).isAnnotationPresent(SerializedName::class.java)) {
-          // Return early
-          return false
-        }
-      }
-      true
-    }
-    else -> false
-  }
-}
-
 /**
  * An interop-ing [JsonAdapter.Factory] that tries to intelligently defer to a `gson` instance for
  * appropriate types.
  */
 private class MoshiGsonInteropJsonAdapterFactory(
-  private val interop: MoshiGsonInterop
+  private val interop: MoshiGsonInterop,
+  private val moshiClassChecker: MoshiClassChecker
 ) : JsonAdapter.Factory {
   override fun create(type: Type, annotations: Set<Annotation>, moshi: Moshi): JsonAdapter<*>? {
     if (annotations.isNotEmpty() || type !is Class<*>) return null
-    return if (type.shouldUseMoshi()) {
+    return if (moshiClassChecker.shouldUseMoshi(type)) {
       moshi.nextAdapter<Any>(this, type, annotations)
     } else {
       GsonDelegatingJsonAdapter(interop.gson.getAdapter(type)).nullSafe()
@@ -145,14 +167,15 @@ internal class GsonDelegatingJsonAdapter<T>(
  * appropriate types.
  */
 private class MoshiGsonInteropTypeAdapterFactory(
-  private val interop: MoshiGsonInterop
+  private val interop: MoshiGsonInterop,
+  private val moshiClassChecker: MoshiClassChecker
 ) : TypeAdapterFactory {
   override fun <T> create(gson: Gson, typeToken: TypeToken<T>): TypeAdapter<T>? {
     val type = typeToken.type
     if (type !is Class<*>) return null
 
     @Suppress("UNCHECKED_CAST")
-    return if (type.shouldUseMoshi()) {
+    return if (moshiClassChecker.shouldUseMoshi(type)) {
       MoshiDelegatingTypeAdapter(interop.moshi.adapter<Any>(type)).nullSafe()
     } else {
       gson.getDelegateAdapter(this, typeToken)
