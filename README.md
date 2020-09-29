@@ -48,7 +48,7 @@ Snapshots of the development version are available in [Sonatype's `snapshots` re
 License
 --------
 
-    Copyright 2020 Zac Sweers
+    Copyright 2020 Slack Technologies, Inc.
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
