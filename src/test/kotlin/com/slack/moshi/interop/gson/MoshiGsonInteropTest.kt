@@ -31,7 +31,7 @@ import org.junit.Test
 class MoshiGsonInteropTest {
   private val interop = Moshi.Builder().build()
     .interopWith(GsonBuilder().create()) {
-      it.add(KotlinJsonAdapterFactory())
+      add(KotlinJsonAdapterFactory())
     }
   private val moshi = interop.first
   private val gson = interop.second
@@ -215,7 +215,7 @@ class MoshiGsonInteropTest {
       .interopWith(
         gson = GsonBuilder().create(),
         moshiClassChecker = { true },
-        moshiBuildHook = { it.add(KotlinJsonAdapterFactory()) }
+        moshiBuildHook = { add(KotlinJsonAdapterFactory()) }
       )
 
     val gsonClassAdapter = moshi.adapter<SimpleGsonClass>()

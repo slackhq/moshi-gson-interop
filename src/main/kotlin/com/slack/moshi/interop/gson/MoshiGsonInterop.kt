@@ -45,7 +45,7 @@ import com.google.gson.stream.JsonWriter as GsonWriter
 public fun Moshi.interopWith(
   gson: Gson,
   moshiClassChecker: MoshiClassChecker = DefaultMoshiClassChecker,
-  moshiBuildHook: (Moshi.Builder) -> Unit = {}
+  moshiBuildHook: Moshi.Builder.() -> Unit = {}
 ): Pair<Moshi, Gson> {
   val interop = MoshiGsonInterop(this, gson, moshiClassChecker, moshiBuildHook)
   return interop.moshi to interop.gson
