@@ -57,7 +57,23 @@ class MoshiGsonInteropTest {
           {
             "value": "gson!"
           }
-        ]
+        ],
+        "genericMoshiClass": {
+          "value": "value!"
+        },
+        "genericGsonClass": {
+          "value": "value!"
+        },
+        "mixedGenericGsonClass": {
+          "value": {
+            "value": "value!"
+          }
+        },
+        "mixedGenericMoshiClass": {
+          "value": {
+            "value": "value!"
+          }
+        }
       }
     """.trimIndent()
 
@@ -113,7 +129,11 @@ class MoshiGsonInteropTest {
       MoshiEnum.TYPE,
       GsonEnum.TYPE,
       listOf(SimpleMoshiClass("moshi!")),
-      listOf(SimpleGsonClass("gson!"))
+      listOf(SimpleGsonClass("gson!")),
+      SimpleGenericMoshiClass("value!"),
+      SimpleGenericGsonClass("value!"),
+      SimpleMixedGenericGsonClass(SimpleGenericMoshiClass("value!")),
+      SimpleMixedGenericMoshiClass(SimpleGenericGsonClass("value!"))
     )
     assertThat(instance).isEqualTo(expected)
     val serialized = adapter.toJson(instance)
@@ -132,7 +152,11 @@ class MoshiGsonInteropTest {
       MoshiEnum.TYPE,
       GsonEnum.TYPE,
       listOf(SimpleMoshiClass("moshi!")),
-      listOf(SimpleGsonClass("gson!"))
+      listOf(SimpleGsonClass("gson!")),
+      SimpleGenericMoshiClass("value!"),
+      SimpleGenericGsonClass("value!"),
+      SimpleMixedGenericGsonClass(SimpleGenericMoshiClass("value!")),
+      SimpleMixedGenericMoshiClass(SimpleGenericGsonClass("value!"))
     )
     assertThat(instance).isEqualTo(expected)
     val serialized = adapter.toJson(instance)
@@ -162,7 +186,6 @@ class MoshiGsonInteropTest {
 
   // TODO
   //  collections of enums
-  //  generic types
 }
 
 @JsonClass(generateAdapter = true)
@@ -173,7 +196,11 @@ data class MoshiClass(
   val moshiEnum: MoshiEnum,
   val gsonEnum: GsonEnum,
   val moreMoshiClasses: List<SimpleMoshiClass>,
-  val moreSimpleGsonClasses: List<SimpleGsonClass>
+  val moreSimpleGsonClasses: List<SimpleGsonClass>,
+  val genericMoshiClass: SimpleGenericMoshiClass<String>,
+  val genericGsonClass: SimpleGenericGsonClass<String>,
+  val mixedGenericGsonClass: SimpleMixedGenericGsonClass<SimpleGenericMoshiClass<String>>,
+  val mixedGenericMoshiClass: SimpleMixedGenericMoshiClass<SimpleGenericGsonClass<String>>
 )
 
 data class GsonClass(
@@ -183,7 +210,11 @@ data class GsonClass(
   val moshiEnum: MoshiEnum,
   val gsonEnum: GsonEnum,
   val moreMoshiClasses: List<SimpleMoshiClass>,
-  val moreSimpleGsonClasses: List<SimpleGsonClass>
+  val moreSimpleGsonClasses: List<SimpleGsonClass>,
+  val genericMoshiClass: SimpleGenericMoshiClass<String>,
+  val genericGsonClass: SimpleGenericGsonClass<String>,
+  val mixedGenericGsonClass: SimpleMixedGenericGsonClass<SimpleGenericMoshiClass<String>>,
+  val mixedGenericMoshiClass: SimpleMixedGenericMoshiClass<SimpleGenericGsonClass<String>>
 )
 
 data class Complex(val value: ComplexNestedOne)
@@ -200,6 +231,16 @@ data class ComplexNestedThree(val value: String)
 data class SimpleMoshiClass(val value: String)
 
 data class SimpleGsonClass(val value: String)
+
+@JsonClass(generateAdapter = true)
+data class SimpleGenericMoshiClass<T>(val value: T)
+
+data class SimpleGenericGsonClass<T>(val value: T)
+
+@JsonClass(generateAdapter = true)
+data class SimpleMixedGenericMoshiClass<T>(val value: T)
+
+data class SimpleMixedGenericGsonClass<T>(val value: T)
 
 enum class RegularEnum {
   TYPE
