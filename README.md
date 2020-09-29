@@ -24,6 +24,12 @@ of things (see `DefaultMoshiClassChecker`'s kdoc). You can alternatively provide
 
 ## Installation
 
+```gradle
+dependencies {
+  implementation("com.slack.moshi:gson-interop:<version>")
+}
+```
+
 Snapshots of the development version are available in [Sonatype's `snapshots` repository][snap].
 
 ## Caveats
