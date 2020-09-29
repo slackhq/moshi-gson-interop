@@ -2,7 +2,7 @@
 
 A tool for bidirectional interop between Moshi and Gson.
 
-This is targeted at codebases that are in the process of migrating from Gson _to_ Moshi and not a 
+This is targeted at codebases that are in the process of migrating from Gson _to_ Moshi and not a
 general-purpose tool that should be used for other reasons.
 
 ## Usage
@@ -31,13 +31,13 @@ Snapshots of the development version are available in [Sonatype's `snapshots` re
 * This uses an unreleased `nextSource()` API in Moshi, so it currently depends on 1.11.0-SNAPSHOT.
   We will update to the stable version when it's released.
 * Performance
-  * A Moshi adapter delegating to Gson should have no performance issues as it is able 
-    to stream data directly. 
-  * Streaming from Gson to Moshi will, however, be degraded as Gson has no equivalent 
+  * A Moshi adapter delegating to Gson should have no performance issues as it is able
+    to stream data directly.
+  * Streaming from Gson to Moshi will, however, be degraded as Gson has no equivalent
     streaming APIs to Moshi's `nextSource()` or `valueSink()` APIs. This means that it
-    must either decode the entire source into an intermediary blob (i.e. a Map, List, 
+    must either decode the entire source into an intermediary blob (i.e. a Map, List,
     etc) first when reading or encode the entire value into a json String first when writing.
-    
+
 
 License
 --------
