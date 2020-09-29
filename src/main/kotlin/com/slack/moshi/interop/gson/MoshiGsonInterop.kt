@@ -39,26 +39,26 @@ import com.google.gson.stream.JsonWriter as GsonWriter
  * Connects this [Moshi] instance to a [Gson] instance for interop. This should be called with the
  * final versions of the input instances and then the returned instances should be used.
  *
- * [extraMoshiConfig] can be configured optionally to add anything to the builder _after_ the interop factory is
- * added, which is useful for testing.
+ * [moshiBuildHook] can be configured optionally to add anything to the builder _after_ the interop
+ * factory is added, which is useful for testing or adding the `KotlinJsonAdapterFactory`.
  */
 public fun Moshi.interopWith(
   gson: Gson,
-  extraMoshiConfig: (Moshi.Builder) -> Unit = {}
+  moshiBuildHook: (Moshi.Builder) -> Unit = {}
 ): Pair<Moshi, Gson> {
-  val interop = MoshiGsonInterop(this, gson, extraMoshiConfig)
+  val interop = MoshiGsonInterop(this, gson, moshiBuildHook)
   return interop.moshi to interop.gson
 }
 
 private class MoshiGsonInterop(
   seedMoshi: Moshi,
   seedGson: Gson,
-  extraMoshiConfig: (Moshi.Builder) -> Unit
+  moshiBuildHook: (Moshi.Builder) -> Unit
 ) {
 
   val moshi: Moshi = seedMoshi.newBuilder()
     .add(MoshiGsonInteropJsonAdapterFactory(this))
-    .apply(extraMoshiConfig)
+    .apply(moshiBuildHook)
     .build()
 
   val gson: Gson = seedGson.newBuilder()
