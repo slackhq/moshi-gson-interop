@@ -20,7 +20,6 @@ import java.net.URL
 
 plugins {
   kotlin("jvm") version "1.4.10"
-  kotlin("kapt") version "1.4.10"
   id("org.jetbrains.dokka") version "1.4.10"
   id("com.diffplug.spotless") version "5.6.0"
   id("com.vanniktech.maven.publish") version "0.13.0"
@@ -53,9 +52,15 @@ java {
 }
 
 tasks.withType<KotlinCompile>().configureEach {
+  val isTest = name == "compileTestKotlin"
   kotlinOptions {
     jvmTarget = "1.8"
-    freeCompilerArgs = listOf("-progressive")
+    val argsList = mutableListOf("-progressive")
+    if (isTest) {
+      argsList.add("-Xopt-in=kotlin.ExperimentalStdlibApi")
+    }
+    @Suppress("SuspiciousCollectionReassignment")
+    freeCompilerArgs += argsList
   }
 }
 
@@ -72,6 +77,10 @@ tasks.named<DokkaTask>("dokkaHtml") {
     }
     // No GSON doc because they host on javadoc.io, which Dokka can't parse.
   }
+}
+
+kotlin {
+  explicitApi()
 }
 
 spotless {
@@ -103,7 +112,7 @@ dependencies {
   implementation("com.google.code.gson:gson:2.8.6")
   implementation("com.squareup.moshi:moshi:$moshiVersion")
 
-  kaptTest("com.squareup.moshi:moshi-kotlin-codegen:$moshiVersion")
+  testImplementation("dev.zacsweers.moshix:moshi-ktx:0.3.0")
   testImplementation("com.squareup.moshi:moshi-kotlin:$moshiVersion")
   testImplementation("junit:junit:4.13")
   testImplementation("com.google.truth:truth:1.0.1")
