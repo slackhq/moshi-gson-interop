@@ -29,12 +29,10 @@ import dev.zacsweers.moshix.adapter
 import org.junit.Test
 
 class MoshiGsonInteropTest {
-  private val interop = wireMoshiGsonInterop(
-    seedMoshi = Moshi.Builder().build(),
-    seedGson = GsonBuilder().create()
-  ) {
-    it.add(KotlinJsonAdapterFactory())
-  }
+  private val interop = Moshi.Builder().build()
+    .interopWith(GsonBuilder().create()) {
+      add(KotlinJsonAdapterFactory())
+    }
   private val moshi = interop.first
   private val gson = interop.second
 
@@ -208,6 +206,25 @@ class MoshiGsonInteropTest {
     assertThat(instance).isEqualTo(expected)
     val serialized = adapter.toJson(expected)
     assertThat(json == serialized)
+  }
+
+  @Test
+  fun customClassChecker() {
+    // An interop Moshi instance set to _always_ claim classes
+    val (moshi, _) = Moshi.Builder().build()
+      .interopWith(
+        gson = GsonBuilder().create(),
+        moshiClassChecker = { true },
+        moshiBuildHook = { add(KotlinJsonAdapterFactory()) }
+      )
+
+    val gsonClassAdapter = moshi.adapter<SimpleGsonClass>()
+    check(gsonClassAdapter is NullSafeJsonAdapter)
+    val delegate = gsonClassAdapter.delegate()
+    // We set it to _always_ use Moshi, so we should never delegate here
+    check(delegate !is GsonDelegatingJsonAdapter)
+    // A little ugly to rely on toString, but just to confirm we're using the KotlinJsonAdapter version
+    assertThat(delegate.toString()).isEqualTo("KotlinJsonAdapter(${SimpleGsonClass::class.java.canonicalName})")
   }
 }
 
