@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 import io.gitlab.arturbosch.detekt.Detekt
+import org.jetbrains.dokka.gradle.DokkaTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import java.net.URL
 
 plugins {
   kotlin("jvm") version "1.4.10"
@@ -28,11 +30,19 @@ repositories {
   mavenCentral()
   // Until Moshi 1.11.0 is released
   maven("https://oss.sonatype.org/content/repositories/snapshots")
-  jcenter().mavenContent {
-    // Required for Dokka
-    includeModule("org.jetbrains.kotlinx", "kotlinx-html-jvm")
-    includeGroup("org.jetbrains.dokka")
-    includeModule("org.jetbrains", "markdown")
+  exclusiveContent {
+    forRepository {
+      maven {
+        name = "JCenter"
+        setUrl("https://jcenter.bintray.com/")
+      }
+    }
+    filter {
+      // Required for Dokka
+      includeModule("org.jetbrains.kotlinx", "kotlinx-html-jvm")
+      includeGroup("org.jetbrains.dokka")
+      includeModule("org.jetbrains", "markdown")
+    }
   }
 }
 
@@ -56,6 +66,17 @@ tasks.withType<KotlinCompile>().configureEach {
 
 tasks.withType<Detekt>().configureEach {
   jvmTarget = "1.8"
+}
+
+tasks.named<DokkaTask>("dokkaHtml") {
+  outputDirectory.set(rootDir.resolve("docs/0.x"))
+  dokkaSourceSets.configureEach {
+    skipDeprecated.set(true)
+    externalDocumentationLink {
+      url.set(URL("https://square.github.io/moshi/1.x/moshi/"))
+    }
+    // No GSON doc because they host on javadoc.io, which Dokka can't parse.
+  }
 }
 
 kotlin {
