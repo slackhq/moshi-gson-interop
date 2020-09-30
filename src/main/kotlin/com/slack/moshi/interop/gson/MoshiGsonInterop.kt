@@ -67,7 +67,6 @@ public fun interface MoshiClassChecker {
  * * Is it an enum with no [@SerializedName][SerializedName]-annotated members? -> Moshi
  * * Else -> Gson
  */
-// TODO should we check for @FromJson/@ToJson classes?
 public object DefaultMoshiClassChecker : MoshiClassChecker {
   override fun shouldUseMoshi(rawType: Class<*>): Boolean {
     return when {
