@@ -38,6 +38,8 @@ Snapshots of the development version are available in [Sonatype's `snapshots` re
 
 * This uses an unreleased `nextSource()` API in Moshi, so it currently depends on 1.11.0-SNAPSHOT.
   We will update to the stable version when it's released.
+* JsonQualifiers on a type in a Gson class will not be passed on to Moshi, as Gson (and the various
+  tools around it) don't capture them.
 * Performance
   * A Moshi adapter delegating to Gson should have no performance issues as it is able
     to stream data directly.
