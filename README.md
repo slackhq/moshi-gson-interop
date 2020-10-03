@@ -24,6 +24,8 @@ of things (see `DefaultMoshiClassChecker`'s kdoc). You can alternatively provide
 
 ## Installation
 
+NOTE: Until Moshi 1.11.0 is released, we will only have snapshots available. See the next `Caveats` section for more details.
+
 ```gradle
 dependencies {
   implementation("com.slack.moshi:gson-interop:<version>")
