@@ -8,7 +8,7 @@ general-purpose tool that should be used for other reasons.
 ## Usage
 
 In order to properly link two `Moshi` and `Gson` instances, you must pass two _complete_
-instances (i.e. not intended to `newBuilder()` later) to `wireMoshiGsonInterop()` and use
+instances (i.e. not intended to `newBuilder()` later) to `Moshi.interopWith()` and use
 the returned instances.
 
 ```kotlin
