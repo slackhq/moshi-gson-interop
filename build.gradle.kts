@@ -28,8 +28,6 @@ plugins {
 
 repositories {
   mavenCentral()
-  // Until Moshi 1.11.0 is released
-  maven("https://oss.sonatype.org/content/repositories/snapshots")
   exclusiveContent {
     forRepository {
       maven {
@@ -107,7 +105,7 @@ spotless {
   }
 }
 
-val moshiVersion = "1.11.0-SNAPSHOT"
+val moshiVersion = "1.11.0"
 dependencies {
   implementation("com.google.code.gson:gson:2.8.6")
   implementation("com.squareup.moshi:moshi:$moshiVersion")
