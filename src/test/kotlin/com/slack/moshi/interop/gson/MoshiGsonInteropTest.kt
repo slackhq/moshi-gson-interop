@@ -23,9 +23,9 @@ import com.google.gson.reflect.TypeToken
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Moshi
+import com.squareup.moshi.adapter
 import com.squareup.moshi.internal.NullSafeJsonAdapter
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
-import dev.zacsweers.moshix.adapter
 import org.junit.Test
 
 class MoshiGsonInteropTest {

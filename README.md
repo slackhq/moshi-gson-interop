@@ -24,8 +24,6 @@ of things (see `DefaultMoshiClassChecker`'s kdoc). You can alternatively provide
 
 ## Installation
 
-NOTE: Until Moshi 1.11.0 is released, we will only have snapshots available. See the next `Caveats` section for more details.
-
 ```gradle
 dependencies {
   implementation("com.slack.moshi:gson-interop:<version>")
@@ -36,8 +34,6 @@ Snapshots of the development version are available in [Sonatype's `snapshots` re
 
 ## Caveats
 
-* This uses an unreleased `nextSource()` API in Moshi, so it currently depends on 1.11.0-SNAPSHOT.
-  We will update to the stable version when it's released.
 * JsonQualifiers on a type in a Gson class will not be passed on to Moshi, as Gson (and the various
   tools around it) don't capture them.
 * Performance

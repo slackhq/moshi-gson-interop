@@ -28,8 +28,6 @@ plugins {
 
 repositories {
   mavenCentral()
-  // Until Moshi 1.11.0 is released
-  maven("https://oss.sonatype.org/content/repositories/snapshots")
   exclusiveContent {
     forRepository {
       maven {
@@ -89,7 +87,7 @@ spotless {
     trimTrailingWhitespace()
     endWithNewline()
   }
-  val ktlintVersion = "0.38.1"
+  val ktlintVersion = "0.39.0"
   val ktlintUserData = mapOf("indent_size" to "2", "continuation_indent_size" to "2")
   kotlin {
     target("**/*.kt")
@@ -107,12 +105,11 @@ spotless {
   }
 }
 
-val moshiVersion = "1.11.0-SNAPSHOT"
+val moshiVersion = "1.11.0"
 dependencies {
   implementation("com.google.code.gson:gson:2.8.6")
   implementation("com.squareup.moshi:moshi:$moshiVersion")
 
-  testImplementation("dev.zacsweers.moshix:moshi-ktx:0.3.0")
   testImplementation("com.squareup.moshi:moshi-kotlin:$moshiVersion")
   testImplementation("junit:junit:4.13")
   testImplementation("com.google.truth:truth:1.0.1")
