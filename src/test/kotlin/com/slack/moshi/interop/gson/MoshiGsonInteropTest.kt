@@ -25,7 +25,7 @@ import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.internal.NullSafeJsonAdapter
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
-import dev.zacsweers.moshix.adapter
+import com.squareup.moshi.adapter
 import org.junit.Test
 
 class MoshiGsonInteropTest {
