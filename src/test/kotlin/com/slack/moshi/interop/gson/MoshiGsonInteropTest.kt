@@ -93,7 +93,8 @@ class MoshiGsonInteropTest {
     """.trimIndent()
 
   private val complexInstance = Complex(
-    ComplexNestedOne(ComplexNestedTwo(ComplexNestedThree("value!"))))
+    ComplexNestedOne(ComplexNestedTwo(ComplexNestedThree("value!")))
+  )
 
   @Test
   fun simpleMoshiDelegation() {
@@ -200,8 +201,12 @@ class MoshiGsonInteropTest {
   @Test
   fun gsonEnumCollections() {
     @Suppress("UNCHECKED_CAST")
-    val adapter = gson.getAdapter(TypeToken.getParameterized(List::class.java,
-      GsonEnum::class.java)) as TypeAdapter<List<GsonEnum>>
+    val adapter = gson.getAdapter(
+      TypeToken.getParameterized(
+        List::class.java,
+        GsonEnum::class.java
+      )
+    ) as TypeAdapter<List<GsonEnum>>
     val expected = listOf(GsonEnum.TYPE)
     val json = "[\"__type\"]"
     val instance = adapter.fromJson(json)
@@ -228,7 +233,8 @@ class MoshiGsonInteropTest {
     check(delegate !is GsonDelegatingJsonAdapter)
     // A little ugly to rely on toString, but just to confirm we're using the KotlinJsonAdapter version
     assertThat(delegate.toString()).isEqualTo(
-      "KotlinJsonAdapter(${SimpleGsonClass::class.java.canonicalName})")
+      "KotlinJsonAdapter(${SimpleGsonClass::class.java.canonicalName})"
+    )
   }
 }
 
