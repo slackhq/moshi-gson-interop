@@ -29,10 +29,10 @@ import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import org.junit.Test
 
 class MoshiGsonInteropTest {
-  private val interop = Moshi.Builder().build()
-    .interopWith(GsonBuilder().create()) {
-      add(KotlinJsonAdapterFactory())
-    }
+  private val interop = Moshi.Builder()
+    .addLast(KotlinJsonAdapterFactory())
+    .build()
+    .interopWith(GsonBuilder().create())
   private val moshi = interop.first
   private val gson = interop.second
 
@@ -92,7 +92,9 @@ class MoshiGsonInteropTest {
     }
     """.trimIndent()
 
-  private val complexInstance = Complex(ComplexNestedOne(ComplexNestedTwo(ComplexNestedThree("value!"))))
+  private val complexInstance = Complex(
+    ComplexNestedOne(ComplexNestedTwo(ComplexNestedThree("value!")))
+  )
 
   @Test
   fun simpleMoshiDelegation() {
@@ -199,7 +201,12 @@ class MoshiGsonInteropTest {
   @Test
   fun gsonEnumCollections() {
     @Suppress("UNCHECKED_CAST")
-    val adapter = gson.getAdapter(TypeToken.getParameterized(List::class.java, GsonEnum::class.java)) as TypeAdapter<List<GsonEnum>>
+    val adapter = gson.getAdapter(
+      TypeToken.getParameterized(
+        List::class.java,
+        GsonEnum::class.java
+      )
+    ) as TypeAdapter<List<GsonEnum>>
     val expected = listOf(GsonEnum.TYPE)
     val json = "[\"__type\"]"
     val instance = adapter.fromJson(json)
@@ -211,11 +218,12 @@ class MoshiGsonInteropTest {
   @Test
   fun customClassChecker() {
     // An interop Moshi instance set to _always_ claim classes
-    val (moshi, _) = Moshi.Builder().build()
+    val (moshi, _) = Moshi.Builder()
+      .addLast(KotlinJsonAdapterFactory())
+      .build()
       .interopWith(
         gson = GsonBuilder().create(),
-        moshiClassChecker = { true },
-        moshiBuildHook = { add(KotlinJsonAdapterFactory()) }
+        moshiClassChecker = { true }
       )
 
     val gsonClassAdapter = moshi.adapter<SimpleGsonClass>()
@@ -224,7 +232,9 @@ class MoshiGsonInteropTest {
     // We set it to _always_ use Moshi, so we should never delegate here
     check(delegate !is GsonDelegatingJsonAdapter)
     // A little ugly to rely on toString, but just to confirm we're using the KotlinJsonAdapter version
-    assertThat(delegate.toString()).isEqualTo("KotlinJsonAdapter(${SimpleGsonClass::class.java.canonicalName})")
+    assertThat(delegate.toString()).isEqualTo(
+      "KotlinJsonAdapter(${SimpleGsonClass::class.java.canonicalName})"
+    )
   }
 }
 
