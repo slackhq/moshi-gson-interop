@@ -26,6 +26,7 @@ import com.squareup.moshi.Moshi
 import com.squareup.moshi.adapter
 import com.squareup.moshi.internal.NullSafeJsonAdapter
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
+import org.junit.Assert.fail
 import org.junit.Test
 
 class MoshiGsonInteropTest {
@@ -236,6 +237,47 @@ class MoshiGsonInteropTest {
       "KotlinJsonAdapter(${SimpleGsonClass::class.java.canonicalName})"
     )
   }
+
+  @Test
+  fun serializeNulls() {
+    val withoutNulls = moshi.adapter(GsonNumber::class.java)
+      .toJson(GsonNumber(value = null))
+    assertThat(withoutNulls).isEqualTo("{}")
+    val withNulls = moshi.adapter(GsonNumber::class.java)
+      .serializeNulls()
+      .toJson(GsonNumber(value = null))
+    assertThat(withNulls).isEqualTo("""{"value":null}""")
+  }
+
+  @Test
+  fun lenientRead() {
+    try {
+      moshi.adapter(GsonNumber::class.java)
+        .fromJson("""{"value":NaN}""")
+      fail()
+    } catch (err: Exception) {
+      assertThat(err.message).startsWith("Use JsonReader.setLenient(true) to accept malformed JSON")
+    }
+    val withNaN = moshi.adapter(GsonNumber::class.java)
+      .lenient()
+      .fromJson("""{"value":NaN}""")
+    assertThat(withNaN).isEqualTo(GsonNumber(value = Double.NaN))
+  }
+
+  @Test
+  fun lenientWrite() {
+    try {
+      moshi.adapter(GsonNumber::class.java)
+        .toJson(GsonNumber(value = Double.NaN))
+      fail()
+    } catch (err: Exception) {
+      assertThat(err.message).startsWith("Numeric values must be finite")
+    }
+    val withNaN = moshi.adapter(GsonNumber::class.java)
+      .lenient()
+      .toJson(GsonNumber(value = Double.NaN))
+    assertThat(withNaN).isEqualTo("""{"value":NaN}""")
+  }
 }
 
 @JsonClass(generateAdapter = true)
@@ -305,3 +347,5 @@ enum class GsonEnum {
   @SerializedName("__type")
   TYPE
 }
+
+data class GsonNumber(val value: Double? = null)
