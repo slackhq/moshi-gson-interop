@@ -147,11 +147,20 @@ internal class GsonDelegatingJsonAdapter<T>(
   private val delegate: TypeAdapter<T>
 ) : JsonAdapter<T>() {
   override fun fromJson(reader: JsonReader): T? {
-    return reader.nextSource().inputStream().reader().use(delegate::fromJson)
+    return reader.nextSource().inputStream().reader().use {
+      val gsonReader = GsonReader(it)
+      gsonReader.isLenient = reader.isLenient
+      delegate.read(gsonReader)
+    }
   }
 
   override fun toJson(writer: JsonWriter, value: T?) {
-    writer.valueSink().outputStream().writer().use { delegate.toJson(it, value) }
+    writer.valueSink().outputStream().writer().use {
+      val gsonWriter = GsonWriter(it)
+      gsonWriter.isLenient = writer.isLenient
+      gsonWriter.serializeNulls = writer.serializeNulls
+      delegate.write(gsonWriter, value)
+    }
   }
 }
 
@@ -180,13 +189,18 @@ internal class MoshiDelegatingTypeAdapter<T>(
   private val delegate: JsonAdapter<T>
 ) : TypeAdapter<T>() {
   override fun write(writer: GsonWriter, value: T?) {
-    val serializedValue = delegate.toJson(value)
+    val serializedValue = delegate
+      .run { if (writer.serializeNulls) serializeNulls() else this }
+      .run { if (writer.isLenient) lenient() else this }
+      .toJson(value)
     writer.jsonValue(serializedValue)
   }
 
   override fun read(reader: GsonReader): T? {
     val jsonValue = JsonParser.parseReader(reader).toJsonValue()
-    return delegate.fromJsonValue(jsonValue)
+    return delegate
+      .run { if (reader.isLenient) lenient() else this }
+      .fromJsonValue(jsonValue)
   }
 }
 
