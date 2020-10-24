@@ -24,6 +24,7 @@ of things (see `DefaultMoshiClassChecker`'s kdoc). You can alternatively provide
 
 ## Installation
 
+[![Maven Central](https://img.shields.io/maven-central/v/com.slack.moshi/gson-interop.svg)](https://mvnrepository.com/artifact/com.slack.moshi/gson-interop)
 ```gradle
 dependencies {
   implementation("com.slack.moshi:gson-interop:<version>")
