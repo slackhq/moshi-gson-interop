@@ -45,7 +45,6 @@ public class EnumMoshiClassChecker(private val defaultToMoshi: Boolean = true) :
   private val annotationToCheck = if (defaultToMoshi) SerializedName::class.java else Json::class.java
   override fun shouldUseMoshi(rawType: Class<*>): Boolean {
     if (rawType.isEnum) {
-      // If it has no Gson @SerializedName annotations, we can use Moshi
       @Suppress("UNCHECKED_CAST")
       val constants: Array<out Enum<*>> = rawType.enumConstants as Array<out Enum<*>>
       for (constant in constants) {
