@@ -54,7 +54,7 @@ public class InteropBuilder internal constructor(
   }
 
   public fun build(): Pair<Moshi, Gson> {
-    val interop = MoshiGsonInterop(moshi, gson, checkers + DefaultMoshiClassChecker)
+    val interop = MoshiGsonInterop(moshi, gson, checkers + StandardMoshiCheckers)
     return interop.moshi to interop.gson
   }
 }
