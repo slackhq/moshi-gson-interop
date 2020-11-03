@@ -68,8 +68,9 @@ public class EnumMoshiClassChecker(private val defaultToMoshi: Boolean = true) :
           return false
         }
       }
+      return defaultToMoshi
     }
-    return defaultToMoshi
+    return false
   }
 
   override fun toString(): String = "EnumMoshiClassChecker(defaultToMoshi=$defaultToMoshi)"
