@@ -66,6 +66,7 @@ public class EnumClassChecker(
   private val defaultSerializer: Serializer = MOSHI,
   private val logger: ((String) -> Unit)? = null
 ) : ClassChecker {
+  @Suppress("ReturnCount")
   override fun serializerFor(rawType: Class<*>): Serializer? {
     if (rawType.isEnum) {
       @Suppress("UNCHECKED_CAST")
@@ -93,7 +94,10 @@ internal class StandardClassCheckers(
   private val defaultSerializer: Serializer?,
   private val logger: ((String) -> Unit)?
 ) : ClassChecker {
+
   private val defaultEnumChecker = EnumClassChecker(defaultSerializer = MOSHI, logger = logger)
+
+  @Suppress("ReturnCount")
   override fun serializerFor(rawType: Class<*>): Serializer {
     BuiltInsClassChecker.serializerFor(rawType)?.let {
       logger?.invoke("🧠 Picking $it for built-in type $rawType")
