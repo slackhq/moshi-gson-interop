@@ -17,32 +17,13 @@ package com.slack.moshi.interop.gson
 
 import com.google.gson.Gson
 import com.squareup.moshi.Moshi
-import kotlin.DeprecationLevel.ERROR
 
 /**
  * Connects this [Moshi] instance to a [Gson] instance for interop. This should be called with the
  * final versions of the input instances and then the returned instances should be used.
  */
-public fun Moshi.interopWith(gson: Gson): Pair<Moshi, Gson> {
+public fun Moshi.interopWith(gson: Gson): MoshiGsonInterop {
   return InteropBuilder(this, gson).build()
-}
-
-/**
- * Connects this [Moshi] instance to a [Gson] instance for interop. This should be called with the
- * final versions of the input instances and then the returned instances should be used.
- */
-@Deprecated(
-  message = "Use interopBuilder",
-  replaceWith = ReplaceWith("interopBuilder(gson).addClassChecker(moshiClassChecker)"),
-  level = ERROR
-)
-public fun Moshi.interopWith(
-  gson: Gson,
-  moshiClassChecker: MoshiClassChecker,
-): Pair<Moshi, Gson> {
-  val builder = InteropBuilder(this, gson)
-    .addClassChecker(moshiClassChecker)
-  return builder.build()
 }
 
 /**
@@ -51,3 +32,12 @@ public fun Moshi.interopWith(
  * instances should be used.
  */
 public fun Moshi.interopBuilder(gson: Gson): InteropBuilder = InteropBuilder(this, gson)
+
+/** Represents an interop'd pair of [moshi] and [gson] instances. */
+public interface MoshiGsonInterop {
+  public val moshi: Moshi
+  public val gson: Gson
+
+  public operator fun component1(): Moshi = moshi
+  public operator fun component2(): Gson = gson
+}
