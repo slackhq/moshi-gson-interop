@@ -37,7 +37,7 @@ public fun Moshi.interopBuilder(gson: Gson): InteropBuilder = InteropBuilder(thi
 public interface MoshiGsonInterop {
   public val moshi: Moshi
   public val gson: Gson
-
-  public operator fun component1(): Moshi = moshi
-  public operator fun component2(): Gson = gson
 }
+
+public operator fun MoshiGsonInterop.component1(): Moshi = moshi
+public operator fun MoshiGsonInterop.component2(): Gson = gson
