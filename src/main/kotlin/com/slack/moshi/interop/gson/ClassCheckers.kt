@@ -64,7 +64,7 @@ public object JsonClassClassChecker : ClassChecker {
  */
 public class EnumClassChecker(
   private val defaultSerializer: Serializer = MOSHI,
-  private val logger: ((String) -> Unit)?  = null
+  private val logger: ((String) -> Unit)? = null
 ) : ClassChecker {
   override fun serializerFor(rawType: Class<*>): Serializer? {
     if (rawType.isEnum) {
@@ -92,7 +92,7 @@ public class EnumClassChecker(
 internal class StandardClassCheckers(
   private val defaultSerializer: Serializer?,
   private val logger: ((String) -> Unit)?
-  ) : ClassChecker {
+) : ClassChecker {
   private val defaultEnumChecker = EnumClassChecker(defaultSerializer = MOSHI, logger = logger)
   override fun serializerFor(rawType: Class<*>): Serializer {
     BuiltInsClassChecker.serializerFor(rawType)?.let {

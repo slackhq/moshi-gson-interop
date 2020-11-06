@@ -26,7 +26,8 @@ public object AdapterMethodsClassChecker : ClassChecker {
     while (clazz != Any::class.java && clazz != null) {
       for (method in clazz.declaredMethods) {
         if (method.isAnnotationPresent(ToJson::class.java) ||
-          method.isAnnotationPresent(FromJson::class.java)) {
+          method.isAnnotationPresent(FromJson::class.java)
+        ) {
           return MOSHI
         }
       }
