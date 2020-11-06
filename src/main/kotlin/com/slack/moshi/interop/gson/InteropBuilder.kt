@@ -25,6 +25,8 @@ import com.google.gson.JsonPrimitive
 import com.google.gson.TypeAdapter
 import com.google.gson.TypeAdapterFactory
 import com.google.gson.reflect.TypeToken
+import com.slack.moshi.interop.gson.Serializer.GSON
+import com.slack.moshi.interop.gson.Serializer.MOSHI
 import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.JsonReader
 import com.squareup.moshi.JsonWriter
@@ -38,39 +40,60 @@ public class InteropBuilder internal constructor(
   private val moshi: Moshi,
   private val gson: Gson,
 ) {
-  public val checkers: MutableList<MoshiClassChecker> = mutableListOf()
+  public val checkers: MutableList<ClassChecker> = mutableListOf()
+
+  // Since we assume this codebase is migrating from GSON, use it as a last resort.
+  private var defaultSerializer: Serializer? = GSON
+
+  private var logger: ((String) -> Unit)? = null
+
+  /**
+   * Sets the default serializer to use if no other checkers match. Use null to error in the event
+   * of no matches.
+   */
+  public fun defaultSerializer(serializer: Serializer?): InteropBuilder = apply {
+    this.defaultSerializer = serializer
+  }
+
+  /**
+   * Optional callback for any internal logging. Useful for debugging purposes.
+   */
+  public fun logger(logger: ((String) -> Unit)?): InteropBuilder = apply {
+    this.logger = logger
+  }
 
   public fun addMoshiType(clazz: Class<*>): InteropBuilder = apply {
-    checkers += MoshiClassChecker {
-      it == clazz
-    }
+    checkers += TypeChecker(MOSHI, clazz.kotlin.javaObjectType)
   }
 
   public fun addGsonType(clazz: Class<*>): InteropBuilder = apply {
-    checkers += MoshiClassChecker {
-      it != clazz
-    }
+    checkers += TypeChecker(GSON, clazz.kotlin.javaObjectType)
   }
 
   public fun addMoshiFactory(factory: JsonAdapter.Factory): InteropBuilder = apply {
-    checkers += MoshiClassChecker {
-      factory.create(it, emptySet(), moshi) != null
+    checkers += FactoryChecker(MOSHI) { rawType ->
+      factory.create(rawType, emptySet(), moshi) != null
     }
   }
 
   public fun addGsonFactory(factory: TypeAdapterFactory): InteropBuilder = apply {
-    checkers += MoshiClassChecker {
-      factory.create(gson, TypeToken.get(it)) != null
+    checkers += FactoryChecker(GSON) { rawType ->
+      factory.create(gson, TypeToken.get(rawType)) != null
     }
   }
 
-  public fun addClassChecker(classChecker: MoshiClassChecker): InteropBuilder = apply {
+  public fun addClassChecker(classChecker: ClassChecker): InteropBuilder = apply {
     checkers += classChecker
   }
 
-  public fun build(): Pair<Moshi, Gson> {
-    val interop = MoshiGsonInterop(moshi, gson, checkers + StandardMoshiCheckers)
-    return interop.moshi to interop.gson
+  public fun build(): MoshiGsonInterop {
+    logger?.invoke("💡 Building moshi-gson interop with default serializer of $defaultSerializer")
+    return MoshiGsonInteropImpl(
+      seedMoshi = moshi,
+      seedGson = gson,
+      checkers = checkers + StandardClassCheckers(defaultSerializer, logger),
+      logger = logger
+    )
   }
 }
 
@@ -82,18 +105,37 @@ public inline fun <reified T> InteropBuilder.addGsonType(): InteropBuilder {
   return addGsonType(T::class.java)
 }
 
-private class MoshiGsonInterop(
+private data class TypeChecker(
+  private val serializer: Serializer,
+  val clazz: Class<*>,
+) : ClassChecker {
+  override fun serializerFor(rawType: Class<*>): Serializer? {
+    return serializer.takeIf { rawType.kotlin.javaObjectType == clazz }
+  }
+}
+
+private data class FactoryChecker(
+  private val serializer: Serializer,
+  val body: (Class<*>) -> Boolean,
+) : ClassChecker {
+  override fun serializerFor(rawType: Class<*>): Serializer? {
+    return serializer.takeIf { body(rawType) }
+  }
+}
+
+private class MoshiGsonInteropImpl(
   seedMoshi: Moshi,
   seedGson: Gson,
-  checkers: List<MoshiClassChecker>,
-) {
+  checkers: List<ClassChecker>,
+  logger: ((String) -> Unit)?,
+) : MoshiGsonInterop {
 
-  val moshi: Moshi = seedMoshi.newBuilder()
-    .add(MoshiGsonInteropJsonAdapterFactory(this, checkers))
+  override val moshi: Moshi = seedMoshi.newBuilder()
+    .add(MoshiGsonInteropJsonAdapterFactory(this, checkers, logger))
     .build()
 
-  val gson: Gson = seedGson.newBuilder()
-    .registerTypeAdapterFactory(MoshiGsonInteropTypeAdapterFactory(this, checkers))
+  override val gson: Gson = seedGson.newBuilder()
+    .registerTypeAdapterFactory(MoshiGsonInteropTypeAdapterFactory(this, checkers, logger))
     .create()
 }
 
@@ -103,13 +145,15 @@ private class MoshiGsonInterop(
  */
 private class MoshiGsonInteropJsonAdapterFactory(
   private val interop: MoshiGsonInterop,
-  private val checkers: List<MoshiClassChecker>,
+  private val checkers: List<ClassChecker>,
+  private val logger: ((String) -> Unit)?,
 ) : JsonAdapter.Factory {
   override fun create(type: Type, annotations: Set<Annotation>, moshi: Moshi): JsonAdapter<*>? {
     if (annotations.isNotEmpty() || type !is Class<*>) return null
-    return if (checkers.any { it.shouldUseMoshi(type) }) {
+    return if (checkers.any { it.serializerFor(type) == MOSHI }) {
       moshi.nextAdapter<Any>(this, type, annotations)
     } else {
+      logger?.invoke("⮑ Gson: $type")
       GsonDelegatingJsonAdapter(interop.gson.getAdapter(type)).nullSafe()
     }
   }
@@ -142,17 +186,19 @@ internal class GsonDelegatingJsonAdapter<T>(
  */
 private class MoshiGsonInteropTypeAdapterFactory(
   private val interop: MoshiGsonInterop,
-  private val checkers: List<MoshiClassChecker>,
+  private val checkers: List<ClassChecker>,
+  private val logger: ((String) -> Unit)?,
 ) : TypeAdapterFactory {
   override fun <T> create(gson: Gson, typeToken: TypeToken<T>): TypeAdapter<T>? {
     val type = typeToken.type
     if (type !is Class<*>) return null
 
     @Suppress("UNCHECKED_CAST")
-    return if (checkers.any { it.shouldUseMoshi(type) }) {
-      MoshiDelegatingTypeAdapter(interop.moshi.adapter<Any>(type)).nullSafe()
-    } else {
+    return if (checkers.any { it.serializerFor(type) == GSON }) {
       gson.getDelegateAdapter(this, typeToken)
+    } else {
+      logger?.invoke("⮑ Moshi: $type")
+      MoshiDelegatingTypeAdapter(interop.moshi.adapter<Any>(type)).nullSafe()
     } as TypeAdapter<T>
   }
 }

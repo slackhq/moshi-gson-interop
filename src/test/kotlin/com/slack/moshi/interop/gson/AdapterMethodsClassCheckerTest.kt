@@ -8,32 +8,32 @@ import org.junit.Test
 class AdapterMethodsClassCheckerTest {
   @Test
   fun simple() {
-    assertThat(AdapterMethodsClassChecker.shouldUseMoshi(ThingWithAdapterMethods::class.java))
-      .isTrue()
+    assertThat(AdapterMethodsClassChecker.serializerFor(ThingWithAdapterMethods::class.java))
+      .isEqualTo(Serializer.MOSHI)
   }
 
   @Test
   fun justFromJson() {
-    assertThat(AdapterMethodsClassChecker.shouldUseMoshi(ThingWithJsonFromJson::class.java))
-      .isTrue()
+    assertThat(AdapterMethodsClassChecker.serializerFor(ThingWithJsonFromJson::class.java))
+      .isEqualTo(Serializer.MOSHI)
   }
 
   @Test
   fun justToJson() {
-    assertThat(AdapterMethodsClassChecker.shouldUseMoshi(ThingWithJsonToJson::class.java))
-      .isTrue()
+    assertThat(AdapterMethodsClassChecker.serializerFor(ThingWithJsonToJson::class.java))
+      .isEqualTo(Serializer.MOSHI)
   }
 
   @Test
   fun subclass() {
-    assertThat(AdapterMethodsClassChecker.shouldUseMoshi(SubclassWithoutFunctions::class.java))
-      .isTrue()
+    assertThat(AdapterMethodsClassChecker.serializerFor(SubclassWithoutFunctions::class.java))
+      .isEqualTo(Serializer.MOSHI)
   }
 
   @Test
   fun ignoreOtherStuff() {
-    assertThat(AdapterMethodsClassChecker.shouldUseMoshi(String::class.java))
-      .isFalse()
+    assertThat(AdapterMethodsClassChecker.serializerFor(String::class.java))
+      .isNull()
   }
 }
 

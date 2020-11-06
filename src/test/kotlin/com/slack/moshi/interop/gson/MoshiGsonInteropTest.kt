@@ -33,9 +33,11 @@ class MoshiGsonInteropTest {
   private val interop = Moshi.Builder()
     .addLast(KotlinJsonAdapterFactory())
     .build()
-    .interopWith(GsonBuilder().create())
-  private val moshi = interop.first
-  private val gson = interop.second
+    .interopBuilder(GsonBuilder().create())
+    .logger(::println)
+    .build()
+  private val moshi = interop.moshi
+  private val gson = interop.gson
 
   //language=JSON
   private val integrationJson =
@@ -223,7 +225,7 @@ class MoshiGsonInteropTest {
       .addLast(KotlinJsonAdapterFactory())
       .build()
       .interopBuilder(GsonBuilder().create())
-      .addClassChecker { true }
+      .addClassChecker { Serializer.MOSHI }
       .build()
 
     val gsonClassAdapter = moshi.adapter<SimpleGsonClass>()
