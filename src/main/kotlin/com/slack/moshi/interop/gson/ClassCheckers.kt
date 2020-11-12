@@ -87,7 +87,7 @@ public class EnumClassChecker(
     return null
   }
 
-  override fun toString(): String = "EnumClassChecker(defaultToMoshi=$defaultSerializer)"
+  override fun toString(): String = "EnumClassChecker(defaultSerializer=$defaultSerializer)"
 }
 
 internal class StandardClassCheckers(
