@@ -22,6 +22,11 @@ val (moshi, gson) = seedMoshi.interopWith(seedGson)
 By default, the interop mechanism will attempt to best-guess which serializer to use based on a combination
 of things (see `DefaultMoshiClassChecker`'s kdoc). You can alternatively provide your own logic for this.
 
+### Advanced
+
+You can use the `Moshi.interopBuilder()` extension to create an `InteropBuilder` for advanced usage and adding
+your own `ClassChecker` logic.
+
 ## Installation
 
 [![Maven Central](https://img.shields.io/maven-central/v/com.slack.moshi/gson-interop.svg)](https://mvnrepository.com/artifact/com.slack.moshi/gson-interop)

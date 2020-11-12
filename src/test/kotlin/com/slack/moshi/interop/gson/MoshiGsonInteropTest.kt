@@ -33,9 +33,11 @@ class MoshiGsonInteropTest {
   private val interop = Moshi.Builder()
     .addLast(KotlinJsonAdapterFactory())
     .build()
-    .interopWith(GsonBuilder().create())
-  private val moshi = interop.first
-  private val gson = interop.second
+    .interopBuilder(GsonBuilder().create())
+    .logger(::println)
+    .build()
+  private val moshi = interop.moshi
+  private val gson = interop.gson
 
   //language=JSON
   private val integrationJson =
@@ -102,7 +104,7 @@ class MoshiGsonInteropTest {
     val gsonClassAdapter = moshi.adapter<SimpleGsonClass>()
     check(gsonClassAdapter is NullSafeJsonAdapter)
     val delegate = gsonClassAdapter.delegate()
-    check(delegate is GsonDelegatingJsonAdapter)
+    assertThat(delegate).isInstanceOf(GsonDelegatingJsonAdapter::class.java)
   }
 
   @Test
@@ -222,10 +224,9 @@ class MoshiGsonInteropTest {
     val (moshi, _) = Moshi.Builder()
       .addLast(KotlinJsonAdapterFactory())
       .build()
-      .interopWith(
-        gson = GsonBuilder().create(),
-        moshiClassChecker = { true }
-      )
+      .interopBuilder(GsonBuilder().create())
+      .addClassChecker { Serializer.MOSHI }
+      .build()
 
     val gsonClassAdapter = moshi.adapter<SimpleGsonClass>()
     check(gsonClassAdapter is NullSafeJsonAdapter)
