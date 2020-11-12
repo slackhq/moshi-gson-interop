@@ -117,7 +117,7 @@ internal class StandardClassCheckers(
   }
 
   override fun toString(): String {
-    return "StandardMoshiCheckers"
+    return "StandardClassCheckers"
   }
 }
 
