@@ -6,13 +6,13 @@ Changelog
 
 _2020-11-12_
 
-* **New:** Builder API for composing logic. This allows for easy customization of picking which 
+* **New:** Builder API for composing logic. This allows for easy customization of picking which
   classes should go to each serializer.
-  
+
   ```kotlin
   val builder = Moshi.Builder().build()
     .interopBuilder(GsonBuilder().create())
-  
+
   builder.addGsonType<String>()
   builder.addMoshiType<Int>()
   builder.addGsonType<List<String>>() // Interesting because only the List is captured
@@ -34,9 +34,9 @@ _2020-11-12_
     }
   }
   ```
-  
-* **API Change:** `MoshiClassChecker` is now just `ClassChecker` and returns a nullable 
-  `Serializer`. `Serializer` can be `MOSHI`, `GSON`, or `null` to defer to another checker. The 
+
+* **API Change:** `MoshiClassChecker` is now just `ClassChecker` and returns a nullable
+  `Serializer`. `Serializer` can be `MOSHI`, `GSON`, or `null` to defer to another checker. The
   builder will try checkers until one claims the given class.
 * **New:** Instead of indicating interop via `Pair<Moshi, Gson>`, these are now represented via
   `MoshiGsonInterop` data class.
