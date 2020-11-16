@@ -23,21 +23,21 @@ import org.junit.Test
 class StandardClassCheckersTest {
   @Test
   fun jsonAdapter() {
-    assertThat(JsonAdapterAnnotationChecker.serializerFor(JsonAdapterClass::class.java))
+    assertThat(JsonAdapterAnnotationClassChecker.serializerFor(JsonAdapterClass::class.java))
       .isEqualTo(Serializer.GSON)
-    assertThat(JsonAdapterAnnotationChecker.serializerFor(UnAnnotatedClass::class.java))
+    assertThat(JsonAdapterAnnotationClassChecker.serializerFor(UnAnnotatedClass::class.java))
       .isNull()
-    assertThat(JsonAdapterAnnotationChecker.serializerFor(JsonClassClass::class.java))
+    assertThat(JsonAdapterAnnotationClassChecker.serializerFor(JsonClassClass::class.java))
       .isNull()
   }
 
   @Test
   fun jsonClass() {
-    assertThat(JsonClassClassChecker.serializerFor(JsonClassClass::class.java))
+    assertThat(JsonClassAnnotationsClassChecker.serializerFor(JsonClassClass::class.java))
       .isEqualTo(Serializer.MOSHI)
-    assertThat(JsonClassClassChecker.serializerFor(UnAnnotatedClass::class.java))
+    assertThat(JsonClassAnnotationsClassChecker.serializerFor(UnAnnotatedClass::class.java))
       .isNull()
-    assertThat(JsonClassClassChecker.serializerFor(JsonAdapterClass::class.java))
+    assertThat(JsonClassAnnotationsClassChecker.serializerFor(JsonAdapterClass::class.java))
       .isNull()
   }
 
