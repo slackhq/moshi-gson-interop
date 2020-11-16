@@ -15,6 +15,7 @@
  */
 package com.slack.moshi.interop.gson
 
+import com.google.gson.annotations.JsonAdapter
 import com.google.gson.annotations.SerializedName
 import com.slack.moshi.interop.gson.Serializer.GSON
 import com.slack.moshi.interop.gson.Serializer.MOSHI
@@ -50,6 +51,16 @@ public object JsonClassClassChecker : ClassChecker {
   }
 
   override fun toString(): String = "JsonClassClassChecker"
+}
+
+/** Checks for classes annotated with GSON's [JsonAdapter] annotation. */
+public object JsonAdapterAnnotationChecker : ClassChecker {
+  override fun serializerFor(rawType: Class<*>): Serializer? {
+    if (rawType.isAnnotationPresent(JsonAdapter::class.java)) {
+      return GSON
+    }
+    return null
+  }
 }
 
 /**
@@ -105,6 +116,10 @@ internal class StandardClassCheckers(
     }
     JsonClassClassChecker.serializerFor(rawType)?.let {
       logger?.invoke("🧠 Picking $it for @JsonClass-annotated type $rawType")
+      return it
+    }
+    JsonAdapterAnnotationChecker.serializerFor(rawType)?.let {
+      logger?.invoke("🧠 Picking $it for @JsonAdapter-annotated type $rawType")
       return it
     }
     defaultEnumChecker.serializerFor(rawType)?.let {
