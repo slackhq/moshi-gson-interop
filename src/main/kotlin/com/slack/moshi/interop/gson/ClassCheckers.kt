@@ -50,7 +50,7 @@ public object JsonClassAnnotationClassChecker : ClassChecker {
     return if (rawType.isAnnotationPresent(JsonClass::class.java)) MOSHI else null
   }
 
-  override fun toString(): String = "JsonClassAnnotationsClassChecker"
+  override fun toString(): String = "JsonClassAnnotationClassChecker"
 }
 
 /** Checks for classes annotated with GSON's [JsonAdapter] annotation. */
