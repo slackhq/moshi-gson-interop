@@ -45,7 +45,7 @@ public object BuiltInsClassChecker : ClassChecker {
 }
 
 /** Checks if a class is annotated with Moshi's [JsonClass]. */
-public object JsonClassAnnotationsClassChecker : ClassChecker {
+public object JsonClassAnnotationClassChecker : ClassChecker {
   override fun serializerFor(rawType: Class<*>): Serializer? {
     return if (rawType.isAnnotationPresent(JsonClass::class.java)) MOSHI else null
   }
@@ -116,7 +116,7 @@ internal class StandardClassCheckers(
       logger?.invoke("🧠 Picking $it for built-in type $rawType")
       return it
     }
-    JsonClassAnnotationsClassChecker.serializerFor(rawType)?.let {
+    JsonClassAnnotationClassChecker.serializerFor(rawType)?.let {
       logger?.invoke("🧠 Picking $it for @JsonClass-annotated type $rawType")
       return it
     }

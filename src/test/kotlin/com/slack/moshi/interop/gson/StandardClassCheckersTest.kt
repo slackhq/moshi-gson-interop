@@ -33,11 +33,11 @@ class StandardClassCheckersTest {
 
   @Test
   fun jsonClass() {
-    assertThat(JsonClassAnnotationsClassChecker.serializerFor(JsonClassClass::class.java))
+    assertThat(JsonClassAnnotationClassChecker.serializerFor(JsonClassClass::class.java))
       .isEqualTo(Serializer.MOSHI)
-    assertThat(JsonClassAnnotationsClassChecker.serializerFor(UnAnnotatedClass::class.java))
+    assertThat(JsonClassAnnotationClassChecker.serializerFor(UnAnnotatedClass::class.java))
       .isNull()
-    assertThat(JsonClassAnnotationsClassChecker.serializerFor(JsonAdapterClass::class.java))
+    assertThat(JsonClassAnnotationClassChecker.serializerFor(JsonAdapterClass::class.java))
       .isNull()
   }
 
