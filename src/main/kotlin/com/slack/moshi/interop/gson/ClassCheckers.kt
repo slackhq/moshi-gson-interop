@@ -15,6 +15,7 @@
  */
 package com.slack.moshi.interop.gson
 
+import com.google.gson.annotations.JsonAdapter
 import com.google.gson.annotations.SerializedName
 import com.slack.moshi.interop.gson.Serializer.GSON
 import com.slack.moshi.interop.gson.Serializer.MOSHI
@@ -44,12 +45,24 @@ public object BuiltInsClassChecker : ClassChecker {
 }
 
 /** Checks if a class is annotated with Moshi's [JsonClass]. */
-public object JsonClassClassChecker : ClassChecker {
+public object JsonClassAnnotationClassChecker : ClassChecker {
   override fun serializerFor(rawType: Class<*>): Serializer? {
     return if (rawType.isAnnotationPresent(JsonClass::class.java)) MOSHI else null
   }
 
-  override fun toString(): String = "JsonClassClassChecker"
+  override fun toString(): String = "JsonClassAnnotationClassChecker"
+}
+
+/** Checks for classes annotated with GSON's [JsonAdapter] annotation. */
+public object JsonAdapterAnnotationClassChecker : ClassChecker {
+  override fun serializerFor(rawType: Class<*>): Serializer? {
+    if (rawType.isAnnotationPresent(JsonAdapter::class.java)) {
+      return GSON
+    }
+    return null
+  }
+
+  override fun toString(): String = "JsonAdapterAnnotationClassChecker"
 }
 
 /**
@@ -103,8 +116,12 @@ internal class StandardClassCheckers(
       logger?.invoke("🧠 Picking $it for built-in type $rawType")
       return it
     }
-    JsonClassClassChecker.serializerFor(rawType)?.let {
+    JsonClassAnnotationClassChecker.serializerFor(rawType)?.let {
       logger?.invoke("🧠 Picking $it for @JsonClass-annotated type $rawType")
+      return it
+    }
+    JsonAdapterAnnotationClassChecker.serializerFor(rawType)?.let {
+      logger?.invoke("🧠 Picking $it for @JsonAdapter-annotated type $rawType")
       return it
     }
     defaultEnumChecker.serializerFor(rawType)?.let {
