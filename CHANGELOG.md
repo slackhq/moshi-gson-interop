@@ -1,6 +1,13 @@
 Changelog
 =========
 
+0.4.0
+-----
+
+* **New:** `JsonAdapterAnnotationClassChecker` in `StandardClassCheckers` to watch for GSON's `@JsonAdapter` annotation.
+* **Fix:** Support `JsonTreeWriter` in interop. Note that our implementation uses internal GSON APIs to work around this,
+  which obviously isn't ideal. We've PR'd a fix for this upstream https://github.com/google/gson/pull/1819.
+
 0.3.0
 -----
 
