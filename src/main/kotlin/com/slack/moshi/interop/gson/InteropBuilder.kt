@@ -256,6 +256,7 @@ private fun JsonElement.toJsonValue(): Any? {
   }
 }
 
+@Suppress("ComplexMethod") // It's not too complex, Detekt
 private fun Any?.toJsonElement(): JsonElement {
   return when (this) {
     null -> JsonNull.INSTANCE
