@@ -24,6 +24,8 @@ import com.google.gson.JsonParser
 import com.google.gson.JsonPrimitive
 import com.google.gson.TypeAdapter
 import com.google.gson.TypeAdapterFactory
+import com.google.gson.internal.bind.JsonTreeWriter
+import com.google.gson.internal.bind.TypeAdapters
 import com.google.gson.reflect.TypeToken
 import com.slack.moshi.interop.gson.Serializer.GSON
 import com.slack.moshi.interop.gson.Serializer.MOSHI
@@ -187,7 +189,7 @@ internal class GsonDelegatingJsonAdapter<T>(
 private class MoshiGsonInteropTypeAdapterFactory(
   private val interop: MoshiGsonInterop,
   private val checkers: List<ClassChecker>,
-  private val logger: ((String) -> Unit)?,
+  private val logger: ((String) -> Unit)?
 ) : TypeAdapterFactory {
   override fun <T> create(gson: Gson, typeToken: TypeToken<T>): TypeAdapter<T>? {
     val type = typeToken.type
@@ -204,14 +206,22 @@ private class MoshiGsonInteropTypeAdapterFactory(
 }
 
 internal class MoshiDelegatingTypeAdapter<T>(
-  private val delegate: JsonAdapter<T>,
+  private val delegate: JsonAdapter<T>
 ) : TypeAdapter<T>() {
   override fun write(writer: com.google.gson.stream.JsonWriter, value: T?) {
-    val serializedValue = delegate
+    val adjustedDelegate = delegate
       .run { if (writer.serializeNulls) serializeNulls() else this }
       .run { if (writer.isLenient) lenient() else this }
-      .toJson(value)
-    writer.jsonValue(serializedValue)
+    if (writer is JsonTreeWriter) {
+      // https://github.com/slackhq/moshi-gson-interop/issues/22
+      // Pending https://github.com/google/gson/pull/1819
+      val jsonValue = adjustedDelegate.toJsonValue(value)
+      val jsonElement = jsonValue.toJsonElement()
+      TypeAdapters.JSON_ELEMENT.write(writer, jsonElement)
+    } else {
+      val serializedValue = adjustedDelegate.toJson(value)
+      writer.jsonValue(serializedValue)
+    }
   }
 
   override fun read(reader: com.google.gson.stream.JsonReader): T? {
@@ -243,5 +253,41 @@ private fun JsonElement.toJsonValue(): Any? {
     }
     is JsonNull -> null
     else -> error("Not possible")
+  }
+}
+
+@Suppress("ComplexMethod") // It's not too complex, Detekt
+private fun Any?.toJsonElement(): JsonElement {
+  return when (this) {
+    null -> JsonNull.INSTANCE
+    is Boolean -> JsonPrimitive(this)
+    is Char -> JsonPrimitive(this)
+    is Number -> JsonPrimitive(this)
+    is String -> JsonPrimitive(this)
+    is Array<*> -> {
+      JsonArray(size).apply {
+        for (element in this) {
+          add(element.toJsonElement())
+        }
+      }
+    }
+    is Collection<*> -> {
+      JsonArray(size).apply {
+        for (element in this@toJsonElement) {
+          add(element.toJsonElement())
+        }
+      }
+    }
+    is Map<*, *> -> {
+      JsonObject().apply {
+        for ((k, v) in entries) {
+          check(k is String) {
+            "JSON only supports String keys!"
+          }
+          add(k, v.toJsonElement())
+        }
+      }
+    }
+    else -> error("Unrecognized JsonValue type: $this")
   }
 }
