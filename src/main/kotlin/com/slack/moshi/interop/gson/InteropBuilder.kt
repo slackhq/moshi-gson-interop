@@ -229,92 +229,82 @@ internal class MoshiDelegatingTypeAdapter<T>(
   }
 
   override fun read(reader: GsonReader): T? {
-    val jsonString = parseStringFromReader(reader)
+    val jsonString = reader.readToString()
     return delegate
       .run { if (reader.isLenient) lenient() else this }
       .fromJson(jsonString)
   }
 }
 
-/** Converts a [GsonReader] to an encoded String for use with [JsonAdapter.fromJson]. */
-private fun parseStringFromReader(reader: GsonReader): String {
-  val lenient = reader.isLenient
-  reader.isLenient = true
-  return try {
-    val builder = StringBuilder()
-    read(reader, builder)
-    builder.toString()
-  } catch (e: StackOverflowError) {
-    throw JsonParseException("Failed parsing JSON source: $reader to Json", e)
-  } catch (e: OutOfMemoryError) {
-    throw JsonParseException("Failed parsing JSON source: $reader to Json", e)
-  } finally {
-    reader.isLenient = lenient
-  }
+/** Streams [this] reader to an encoded [String] for use with [JsonAdapter.fromJson]. */
+private fun GsonReader.readToString(): String {
+  val builder = StringBuilder()
+  readTo(builder)
+  return builder.toString()
 }
 
-/** Streams the contents of a given Gson [reader] into the target [builder] as a raw JSON string. */
+/** Streams [this] reader into the target [builder] as an encoded JSON [String]. */
 @Suppress("LongMethod")
-private fun read(reader: GsonReader, builder: StringBuilder) {
-  when (val token = reader.peek()) {
+private fun GsonReader.readTo(builder: StringBuilder) {
+  when (val token = peek()) {
     JsonToken.STRING -> {
       builder.append('"')
-      builder.append(reader.nextString())
+      builder.append(nextString())
       builder.append('"')
     }
     JsonToken.NUMBER -> {
       // This allows moshi-gson-interop to preserve encoding from the reader,
       // avoiding issues like Gson's JsonElement API converting all
       // numbers potentially to Doubles.
-      val lenient = reader.isLenient
+      val lenient = isLenient
       try {
-        builder.append(reader.nextString())
+        builder.append(nextString())
       } finally {
-        reader.isLenient = lenient
+        isLenient = lenient
       }
     }
     JsonToken.BOOLEAN -> {
-      builder.append(reader.nextBoolean().toString())
+      builder.append(nextBoolean().toString())
     }
     JsonToken.NULL -> {
-      reader.nextNull()
+      nextNull()
       builder.append("null")
     }
     JsonToken.BEGIN_ARRAY -> {
       builder.append('[')
-      reader.beginArray()
+      beginArray()
       var first = true
-      while (reader.hasNext()) {
+      while (hasNext()) {
         if (first) {
           first = false
         } else {
           builder.append(',')
         }
-        read(reader, builder)
+        readTo(builder)
       }
       builder.append(']')
     }
     JsonToken.BEGIN_OBJECT -> {
       builder.append('{')
-      reader.beginObject()
+      beginObject()
       var first = true
-      while (reader.hasNext()) {
+      while (hasNext()) {
         if (first) {
           first = false
         } else {
           builder.append(',')
         }
         builder.append('"')
-        builder.append(reader.nextName())
+        builder.append(nextName())
         builder.append('"')
         builder.append(':')
-        read(reader, builder)
+        readTo(builder)
       }
-      reader.endObject()
+      endObject()
       builder.append('}')
     }
     JsonToken.END_DOCUMENT, JsonToken.NAME, JsonToken.END_OBJECT, JsonToken.END_ARRAY -> {
-      throw JsonParseException("Unexpected token $token at ${reader.path}")
+      throw JsonParseException("Unexpected token $token at $path")
     }
   }
 }
