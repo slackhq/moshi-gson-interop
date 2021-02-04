@@ -264,7 +264,7 @@ private fun read(reader: GsonReader, builder: StringBuilder) {
     }
     JsonToken.NUMBER -> {
       // This allows moshi-gson-interop to preserve encoding from the reader,
-      // avoiding issues like Gson's JsonElement API converting all 
+      // avoiding issues like Gson's JsonElement API converting all
       // numbers potentially to Doubles.
       val lenient = reader.isLenient
       try {
@@ -344,7 +344,7 @@ private fun GsonWriter.write(reader: JsonReader) {
     Token.STRING -> value(reader.nextString())
     Token.NUMBER -> {
       // This allows moshi-gson-interop to preserve encoding from the reader,
-      // avoiding issues like Moshi's `toJsonValue` API converting all 
+      // avoiding issues like Moshi's `toJsonValue` API converting all
       // numbers potentially to Doubles.
       val lenient = reader.isLenient
       try {
