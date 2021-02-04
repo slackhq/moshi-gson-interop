@@ -237,7 +237,7 @@ internal class MoshiDelegatingTypeAdapter<T>(
 }
 
 /** Converts a [GsonReader] to an encoded String for use with [JsonAdapter.fromJson]. */
-internal fun parseStringFromReader(reader: GsonReader): String {
+private fun parseStringFromReader(reader: GsonReader): String {
   val lenient = reader.isLenient
   reader.isLenient = true
   return try {
