@@ -1,6 +1,16 @@
 Changelog
 =========
 
+0.4.1
+-----
+
+_2021-2-04_
+
+* **Fix:** Best-effort preserve the exact encoding of numbers during interop. Some users rely on lenient parsing of 
+  numbers as strings, which can lead to problems if interop results in int/long literals being converted to 
+  floating-point types (which changes the value of the resulting string!). Slack would totally never rely on this 
+  behavior, no way.
+
 0.4.0
 -----
 
