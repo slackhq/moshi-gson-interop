@@ -218,7 +218,8 @@ internal class MoshiDelegatingTypeAdapter<T>(
     val serializedValue = adjustedDelegate.toJson(value)
     if (writer is JsonTreeWriter) {
       // See https://github.com/slackhq/moshi-gson-interop/issues/22
-      // Even with https://github.com/google/gson/pull/1819, using JsonElement is not enough because
+      // Even with https://github.com/google/gson/pull/1819, using JsonElement is not enough
+      // because of the above Double conversions.
       val buffer = Buffer()
       buffer.writeUtf8(serializedValue)
       val reader = JsonReader.of(buffer)
