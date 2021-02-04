@@ -257,6 +257,7 @@ private fun GsonReader.readTo(builder: StringBuilder) {
       // avoiding issues like Gson's JsonElement API converting all
       // numbers potentially to Doubles.
       val lenient = isLenient
+      isLenient = true
       try {
         builder.append(nextString())
       } finally {
@@ -337,6 +338,7 @@ private fun GsonWriter.write(reader: JsonReader) {
       // avoiding issues like Moshi's `toJsonValue` API converting all
       // numbers potentially to Doubles.
       val lenient = reader.isLenient
+      reader.isLenient = true
       try {
         value(reader.nextString())
       } finally {
