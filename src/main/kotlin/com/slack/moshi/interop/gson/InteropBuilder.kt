@@ -253,7 +253,7 @@ private fun parseStringFromReader(reader: GsonReader): String {
   }
 }
 
-/** Streams the contents of a given Gson [reader] into the target [builder]. */
+/** Streams the contents of a given Gson [reader] into the target [builder] as a raw JSON string. */
 @Suppress("LongMethod")
 private fun read(reader: GsonReader, builder: StringBuilder) {
   when (val token = reader.peek()) {
