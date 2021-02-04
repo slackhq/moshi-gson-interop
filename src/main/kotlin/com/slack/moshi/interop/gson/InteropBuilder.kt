@@ -16,24 +16,24 @@
 package com.slack.moshi.interop.gson
 
 import com.google.gson.Gson
-import com.google.gson.JsonArray
-import com.google.gson.JsonElement
-import com.google.gson.JsonNull
-import com.google.gson.JsonObject
-import com.google.gson.JsonParser
-import com.google.gson.JsonPrimitive
+import com.google.gson.JsonParseException
 import com.google.gson.TypeAdapter
 import com.google.gson.TypeAdapterFactory
 import com.google.gson.internal.bind.JsonTreeWriter
-import com.google.gson.internal.bind.TypeAdapters
 import com.google.gson.reflect.TypeToken
+import com.google.gson.stream.JsonToken
 import com.slack.moshi.interop.gson.Serializer.GSON
 import com.slack.moshi.interop.gson.Serializer.MOSHI
 import com.squareup.moshi.JsonAdapter
+import com.squareup.moshi.JsonDataException
 import com.squareup.moshi.JsonReader
+import com.squareup.moshi.JsonReader.Token
 import com.squareup.moshi.JsonWriter
 import com.squareup.moshi.Moshi
+import okio.Buffer
 import java.lang.reflect.Type
+import com.google.gson.stream.JsonReader as GsonReader
+import com.google.gson.stream.JsonWriter as GsonWriter
 
 /**
  * A simple builder API for customizing interop logic between a given [moshi] and [gson] instance.
@@ -166,7 +166,7 @@ internal class GsonDelegatingJsonAdapter<T>(
 ) : JsonAdapter<T>() {
   override fun fromJson(reader: JsonReader): T? {
     return reader.nextSource().inputStream().reader().use {
-      val gsonReader = com.google.gson.stream.JsonReader(it)
+      val gsonReader = GsonReader(it)
       gsonReader.isLenient = reader.isLenient
       delegate.read(gsonReader)
     }
@@ -174,7 +174,7 @@ internal class GsonDelegatingJsonAdapter<T>(
 
   override fun toJson(writer: JsonWriter, value: T?) {
     writer.valueSink().outputStream().writer().use {
-      val gsonWriter = com.google.gson.stream.JsonWriter(it)
+      val gsonWriter = GsonWriter(it)
       gsonWriter.isLenient = writer.isLenient
       gsonWriter.serializeNulls = writer.serializeNulls
       delegate.write(gsonWriter, value)
@@ -208,86 +208,148 @@ private class MoshiGsonInteropTypeAdapterFactory(
 internal class MoshiDelegatingTypeAdapter<T>(
   private val delegate: JsonAdapter<T>
 ) : TypeAdapter<T>() {
-  override fun write(writer: com.google.gson.stream.JsonWriter, value: T?) {
+  override fun write(writer: GsonWriter, value: T?) {
     val adjustedDelegate = delegate
       .run { if (writer.serializeNulls) serializeNulls() else this }
       .run { if (writer.isLenient) lenient() else this }
+    // Write to a raw JSON string first, then stream it back into a GSON writer
+    // Moshi's toJsonValue() will up-convert all numbers to Double. We want to preserve data
+    // exactly as-is!
+    val serializedValue = adjustedDelegate.toJson(value)
     if (writer is JsonTreeWriter) {
-      // https://github.com/slackhq/moshi-gson-interop/issues/22
-      // Pending https://github.com/google/gson/pull/1819
-      val jsonValue = adjustedDelegate.toJsonValue(value)
-      val jsonElement = jsonValue.toJsonElement()
-      TypeAdapters.JSON_ELEMENT.write(writer, jsonElement)
+      // See https://github.com/slackhq/moshi-gson-interop/issues/22
+      // Even with https://github.com/google/gson/pull/1819, using JsonElement is not enough
+      // because of the above Double conversions.
+      val buffer = Buffer()
+      buffer.writeUtf8(serializedValue)
+      val reader = JsonReader.of(buffer)
+      writer.write(reader)
     } else {
-      val serializedValue = adjustedDelegate.toJson(value)
       writer.jsonValue(serializedValue)
     }
   }
 
-  override fun read(reader: com.google.gson.stream.JsonReader): T? {
-    val jsonValue = JsonParser.parseReader(reader).toJsonValue()
+  override fun read(reader: GsonReader): T? {
+    val jsonString = reader.readToString()
     return delegate
       .run { if (reader.isLenient) lenient() else this }
-      .fromJsonValue(jsonValue)
+      .fromJson(jsonString)
   }
 }
 
-/** Converts a [JsonElement] to a simple object for use with [JsonAdapter.fromJsonValue]. */
-private fun JsonElement.toJsonValue(): Any? {
-  return when (this) {
-    is JsonArray -> {
-      map { it.toJsonValue() }
+/** Streams [this] reader to an encoded [String] for use with [JsonAdapter.fromJson]. */
+private fun GsonReader.readToString(): String {
+  val builder = StringBuilder()
+  readTo(builder)
+  return builder.toString()
+}
+
+/** Streams [this] reader into the target [builder] as an encoded JSON [String]. */
+@Suppress("LongMethod")
+private fun GsonReader.readTo(builder: StringBuilder) {
+  when (val token = peek()) {
+    JsonToken.STRING -> {
+      builder.append('"')
+      builder.append(nextString())
+      builder.append('"')
     }
-    is JsonObject -> {
-      entrySet().associate { (key, elementValue) ->
-        key to elementValue.toJsonValue()
+    JsonToken.NUMBER -> {
+      // This allows moshi-gson-interop to preserve encoding from the reader,
+      // avoiding issues like Gson's JsonElement API converting all
+      // numbers potentially to Doubles.
+      val lenient = isLenient
+      isLenient = true
+      try {
+        builder.append(nextString())
+      } finally {
+        isLenient = lenient
       }
     }
-    is JsonPrimitive -> {
-      when {
-        isBoolean -> asBoolean
-        isNumber -> asNumber
-        isString -> asString
-        else -> error("Unknown type: $this")
-      }
+    JsonToken.BOOLEAN -> {
+      builder.append(nextBoolean().toString())
     }
-    is JsonNull -> null
-    else -> error("Not possible")
+    JsonToken.NULL -> {
+      nextNull()
+      builder.append("null")
+    }
+    JsonToken.BEGIN_ARRAY -> {
+      builder.append('[')
+      beginArray()
+      var first = true
+      while (hasNext()) {
+        if (first) {
+          first = false
+        } else {
+          builder.append(',')
+        }
+        readTo(builder)
+      }
+      builder.append(']')
+    }
+    JsonToken.BEGIN_OBJECT -> {
+      builder.append('{')
+      beginObject()
+      var first = true
+      while (hasNext()) {
+        if (first) {
+          first = false
+        } else {
+          builder.append(',')
+        }
+        builder.append('"')
+        builder.append(nextName())
+        builder.append('"')
+        builder.append(':')
+        readTo(builder)
+      }
+      endObject()
+      builder.append('}')
+    }
+    JsonToken.END_DOCUMENT, JsonToken.NAME, JsonToken.END_OBJECT, JsonToken.END_ARRAY -> {
+      throw JsonParseException("Unexpected token $token at $path")
+    }
   }
 }
 
-@Suppress("ComplexMethod") // It's not too complex, Detekt
-private fun Any?.toJsonElement(): JsonElement {
-  return when (this) {
-    null -> JsonNull.INSTANCE
-    is Boolean -> JsonPrimitive(this)
-    is Char -> JsonPrimitive(this)
-    is Number -> JsonPrimitive(this)
-    is String -> JsonPrimitive(this)
-    is Array<*> -> {
-      JsonArray(size).apply {
-        for (element in this) {
-          add(element.toJsonElement())
-        }
+/** Streams the contents of a given Moshi [reader] into this writer. */
+private fun GsonWriter.write(reader: JsonReader) {
+  when (val token = reader.peek()) {
+    Token.BEGIN_ARRAY -> {
+      reader.beginArray()
+      beginArray()
+      while (reader.hasNext()) {
+        write(reader)
+      }
+      endArray()
+      reader.endArray()
+    }
+    Token.BEGIN_OBJECT -> {
+      reader.beginObject()
+      beginObject()
+      while (reader.hasNext()) {
+        name(reader.nextName())
+        write(reader)
+      }
+      endObject()
+      reader.endObject()
+    }
+    Token.STRING -> value(reader.nextString())
+    Token.NUMBER -> {
+      // This allows moshi-gson-interop to preserve encoding from the reader,
+      // avoiding issues like Moshi's `toJsonValue` API converting all
+      // numbers potentially to Doubles.
+      val lenient = reader.isLenient
+      reader.isLenient = true
+      try {
+        value(reader.nextString())
+      } finally {
+        reader.isLenient = lenient
       }
     }
-    is Collection<*> -> {
-      JsonArray(size).apply {
-        for (element in this@toJsonElement) {
-          add(element.toJsonElement())
-        }
-      }
+    Token.BOOLEAN -> value(reader.nextBoolean())
+    Token.NULL -> value(reader.nextNull<String>())
+    Token.NAME, Token.END_ARRAY, Token.END_OBJECT, Token.END_DOCUMENT -> {
+      throw JsonDataException("Unexpected token $token at ${reader.path}")
     }
-    is Map<*, *> -> {
-      JsonObject().apply {
-        for ((k, v) in entries) {
-          check(k is String) {
-            "JSON only supports String keys!"
-          }
-          add(k, v.toJsonElement())
-        }
-      }
-    }
-    else -> error("Unrecognized JsonValue type: $this")
   }
 }

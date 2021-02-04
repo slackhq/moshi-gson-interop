@@ -19,11 +19,11 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.net.URL
 
 plugins {
-  kotlin("jvm") version "1.4.10"
-  id("org.jetbrains.dokka") version "1.4.10"
-  id("com.diffplug.spotless") version "5.6.0"
+  kotlin("jvm") version "1.4.30"
+  id("org.jetbrains.dokka") version "1.4.20"
+  id("com.diffplug.spotless") version "5.9.0"
   id("com.vanniktech.maven.publish") version "0.13.0"
-  id("io.gitlab.arturbosch.detekt") version "1.13.1"
+  id("io.gitlab.arturbosch.detekt") version "1.15.0"
 }
 
 repositories {
@@ -112,5 +112,5 @@ dependencies {
 
   testImplementation("com.squareup.moshi:moshi-kotlin:$moshiVersion")
   testImplementation("junit:junit:4.13.1")
-  testImplementation("com.google.truth:truth:1.0.1")
+  testImplementation("com.google.truth:truth:1.1.2")
 }
