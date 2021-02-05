@@ -223,7 +223,7 @@ internal class MoshiDelegatingTypeAdapter<T>(
       val buffer = Buffer()
       buffer.writeUtf8(serializedValue)
       val reader = JsonReader.of(buffer)
-      writer.write(reader)
+      reader.readTo(writer)
     } else {
       writer.jsonValue(serializedValue)
     }
@@ -303,44 +303,44 @@ private fun GsonReader.readTo(writer: JsonWriter) {
 }
 
 /** Streams the contents of a given Moshi [reader] into this writer. */
-private fun GsonWriter.write(reader: JsonReader) {
-  when (val token = reader.peek()) {
+private fun JsonReader.readTo(writer: GsonWriter) {
+  when (val token = peek()) {
     Token.BEGIN_ARRAY -> {
-      reader.beginArray()
       beginArray()
-      while (reader.hasNext()) {
-        write(reader)
+      writer.beginArray()
+      while (hasNext()) {
+        readTo(writer)
       }
+      writer.endArray()
       endArray()
-      reader.endArray()
     }
     Token.BEGIN_OBJECT -> {
-      reader.beginObject()
       beginObject()
-      while (reader.hasNext()) {
-        name(reader.nextName())
-        write(reader)
+      writer.beginObject()
+      while (hasNext()) {
+        writer.name(nextName())
+        readTo(writer)
       }
+      writer.endObject()
       endObject()
-      reader.endObject()
     }
-    Token.STRING -> value(reader.nextString())
+    Token.STRING -> writer.value(nextString())
     Token.NUMBER -> {
       // This allows moshi-gson-interop to preserve encoding from the reader,
       // avoiding issues like Moshi's `toJsonValue` API converting all
       // numbers potentially to Doubles.
-      val lenient = reader.isLenient
-      reader.isLenient = true
+      val lenient = isLenient
+      isLenient = true
       try {
-        value(reader.nextString())
+        writer.jsonValue(nextString())
       } finally {
-        reader.isLenient = lenient
+        isLenient = lenient
       }
     }
-    Token.BOOLEAN -> value(reader.nextBoolean())
-    Token.NULL -> value(reader.nextNull<String>())
+    Token.BOOLEAN -> writer.value(nextBoolean())
+    Token.NULL -> writer.value(nextNull<String>())
     Token.NAME, Token.END_ARRAY, Token.END_OBJECT, Token.END_DOCUMENT -> {
-      throw JsonDataException("Unexpected token $token at ${reader.path}")
+      throw JsonDataException("Unexpected token $token at $path")
     }
   }
 }
