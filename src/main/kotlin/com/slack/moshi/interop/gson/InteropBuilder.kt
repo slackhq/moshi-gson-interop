@@ -230,28 +230,27 @@ internal class MoshiDelegatingTypeAdapter<T>(
   }
 
   override fun read(reader: GsonReader): T? {
-    val jsonString = reader.readToString()
+    // First read it into a buffer
+    val buffer = Buffer()
+    JsonWriter.of(buffer).use { writer ->
+      reader.readTo(writer)
+    }
+
+    // Now write out an encoded string (to ensure we have valid JSON)
+    val encodedString = buffer.readUtf8()
+
     return delegate
       .run { if (reader.isLenient) lenient() else this }
-      .fromJson(jsonString)
+      .fromJson(encodedString)
   }
 }
 
-/** Streams [this] reader to an encoded [String] for use with [JsonAdapter.fromJson]. */
-private fun GsonReader.readToString(): String {
-  val builder = StringBuilder()
-  readTo(builder)
-  return builder.toString()
-}
-
-/** Streams [this] reader into the target [builder] as an encoded JSON [String]. */
+/** Streams [this] reader into the target [writer] as an encoded JSON [String]. */
 @Suppress("LongMethod")
-private fun GsonReader.readTo(builder: StringBuilder) {
+private fun GsonReader.readTo(writer: JsonWriter) {
   when (val token = peek()) {
     JsonToken.STRING -> {
-      builder.append('"')
-      builder.append(nextString())
-      builder.append('"')
+      writer.value(nextString())
     }
     JsonToken.NUMBER -> {
       // This allows moshi-gson-interop to preserve encoding from the reader,
@@ -260,52 +259,44 @@ private fun GsonReader.readTo(builder: StringBuilder) {
       val lenient = isLenient
       isLenient = true
       try {
-        builder.append(nextString())
+        writer.valueSink().use { it.writeUtf8(nextString()) }
       } finally {
         isLenient = lenient
       }
     }
     JsonToken.BOOLEAN -> {
-      builder.append(nextBoolean().toString())
+      writer.value(nextBoolean())
     }
     JsonToken.NULL -> {
       nextNull()
-      builder.append("null")
+      writer.nullValue()
     }
     JsonToken.BEGIN_ARRAY -> {
-      builder.append('[')
+      writer.beginArray()
       beginArray()
-      var first = true
       while (hasNext()) {
-        if (first) {
-          first = false
-        } else {
-          builder.append(',')
-        }
-        readTo(builder)
+        readTo(writer)
       }
-      builder.append(']')
+      endArray()
+      writer.endArray()
     }
     JsonToken.BEGIN_OBJECT -> {
-      builder.append('{')
+      writer.beginObject()
       beginObject()
-      var first = true
       while (hasNext()) {
-        if (first) {
-          first = false
-        } else {
-          builder.append(',')
-        }
-        builder.append('"')
-        builder.append(nextName())
-        builder.append('"')
-        builder.append(':')
-        readTo(builder)
+        writer.promoteValueToName()
+        // Read the name
+        readTo(writer)
+        // Read the value
+        readTo(writer)
       }
       endObject()
-      builder.append('}')
+      writer.endObject()
     }
-    JsonToken.END_DOCUMENT, JsonToken.NAME, JsonToken.END_OBJECT, JsonToken.END_ARRAY -> {
+    JsonToken.NAME -> {
+      writer.value(nextName())
+    }
+    JsonToken.END_DOCUMENT, JsonToken.END_OBJECT, JsonToken.END_ARRAY -> {
       throw JsonParseException("Unexpected token $token at $path")
     }
   }
