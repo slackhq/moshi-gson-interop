@@ -223,35 +223,34 @@ internal class MoshiDelegatingTypeAdapter<T>(
       val buffer = Buffer()
       buffer.writeUtf8(serializedValue)
       val reader = JsonReader.of(buffer)
-      writer.write(reader)
+      reader.readTo(writer)
     } else {
       writer.jsonValue(serializedValue)
     }
   }
 
   override fun read(reader: GsonReader): T? {
-    val jsonString = reader.readToString()
+    // First read it into a buffer
+    val buffer = Buffer()
+    JsonWriter.of(buffer).use { writer ->
+      reader.readTo(writer)
+    }
+
+    // Now write out an encoded string (to ensure we have valid JSON)
+    val encodedString = buffer.readUtf8()
+
     return delegate
       .run { if (reader.isLenient) lenient() else this }
-      .fromJson(jsonString)
+      .fromJson(encodedString)
   }
 }
 
-/** Streams [this] reader to an encoded [String] for use with [JsonAdapter.fromJson]. */
-private fun GsonReader.readToString(): String {
-  val builder = StringBuilder()
-  readTo(builder)
-  return builder.toString()
-}
-
-/** Streams [this] reader into the target [builder] as an encoded JSON [String]. */
+/** Streams [this] reader into the target [writer] as an encoded JSON [String]. */
 @Suppress("LongMethod")
-private fun GsonReader.readTo(builder: StringBuilder) {
+private fun GsonReader.readTo(writer: JsonWriter) {
   when (val token = peek()) {
     JsonToken.STRING -> {
-      builder.append('"')
-      builder.append(nextString())
-      builder.append('"')
+      writer.value(nextString())
     }
     JsonToken.NUMBER -> {
       // This allows moshi-gson-interop to preserve encoding from the reader,
@@ -260,96 +259,88 @@ private fun GsonReader.readTo(builder: StringBuilder) {
       val lenient = isLenient
       isLenient = true
       try {
-        builder.append(nextString())
+        writer.valueSink().use { it.writeUtf8(nextString()) }
       } finally {
         isLenient = lenient
       }
     }
     JsonToken.BOOLEAN -> {
-      builder.append(nextBoolean().toString())
+      writer.value(nextBoolean())
     }
     JsonToken.NULL -> {
       nextNull()
-      builder.append("null")
+      writer.nullValue()
     }
     JsonToken.BEGIN_ARRAY -> {
-      builder.append('[')
+      writer.beginArray()
       beginArray()
-      var first = true
       while (hasNext()) {
-        if (first) {
-          first = false
-        } else {
-          builder.append(',')
-        }
-        readTo(builder)
+        readTo(writer)
       }
-      builder.append(']')
+      endArray()
+      writer.endArray()
     }
     JsonToken.BEGIN_OBJECT -> {
-      builder.append('{')
+      writer.beginObject()
       beginObject()
-      var first = true
       while (hasNext()) {
-        if (first) {
-          first = false
-        } else {
-          builder.append(',')
-        }
-        builder.append('"')
-        builder.append(nextName())
-        builder.append('"')
-        builder.append(':')
-        readTo(builder)
+        writer.promoteValueToName()
+        // Read the name
+        readTo(writer)
+        // Read the value
+        readTo(writer)
       }
       endObject()
-      builder.append('}')
+      writer.endObject()
     }
-    JsonToken.END_DOCUMENT, JsonToken.NAME, JsonToken.END_OBJECT, JsonToken.END_ARRAY -> {
+    JsonToken.NAME -> {
+      writer.value(nextName())
+    }
+    JsonToken.END_DOCUMENT, JsonToken.END_OBJECT, JsonToken.END_ARRAY -> {
       throw JsonParseException("Unexpected token $token at $path")
     }
   }
 }
 
 /** Streams the contents of a given Moshi [reader] into this writer. */
-private fun GsonWriter.write(reader: JsonReader) {
-  when (val token = reader.peek()) {
+private fun JsonReader.readTo(writer: GsonWriter) {
+  when (val token = peek()) {
     Token.BEGIN_ARRAY -> {
-      reader.beginArray()
       beginArray()
-      while (reader.hasNext()) {
-        write(reader)
+      writer.beginArray()
+      while (hasNext()) {
+        readTo(writer)
       }
+      writer.endArray()
       endArray()
-      reader.endArray()
     }
     Token.BEGIN_OBJECT -> {
-      reader.beginObject()
       beginObject()
-      while (reader.hasNext()) {
-        name(reader.nextName())
-        write(reader)
+      writer.beginObject()
+      while (hasNext()) {
+        writer.name(nextName())
+        readTo(writer)
       }
+      writer.endObject()
       endObject()
-      reader.endObject()
     }
-    Token.STRING -> value(reader.nextString())
+    Token.STRING -> writer.value(nextString())
     Token.NUMBER -> {
       // This allows moshi-gson-interop to preserve encoding from the reader,
       // avoiding issues like Moshi's `toJsonValue` API converting all
       // numbers potentially to Doubles.
-      val lenient = reader.isLenient
-      reader.isLenient = true
+      val lenient = isLenient
+      isLenient = true
       try {
-        value(reader.nextString())
+        writer.jsonValue(nextString())
       } finally {
-        reader.isLenient = lenient
+        isLenient = lenient
       }
     }
-    Token.BOOLEAN -> value(reader.nextBoolean())
-    Token.NULL -> value(reader.nextNull<String>())
+    Token.BOOLEAN -> writer.value(nextBoolean())
+    Token.NULL -> writer.value(nextNull<String>())
     Token.NAME, Token.END_ARRAY, Token.END_OBJECT, Token.END_DOCUMENT -> {
-      throw JsonDataException("Unexpected token $token at ${reader.path}")
+      throw JsonDataException("Unexpected token $token at $path")
     }
   }
 }

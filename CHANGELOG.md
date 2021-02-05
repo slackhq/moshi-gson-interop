@@ -6,9 +6,9 @@ Changelog
 
 _2021-2-04_
 
-* **Fix:** Best-effort preserve the exact encoding of numbers during interop. Some users rely on lenient parsing of 
-  numbers as strings, which can lead to problems if interop results in int/long literals being converted to 
-  floating-point types (which changes the value of the resulting string!). Slack would totally never rely on this 
+* **Fix:** Best-effort preserve the exact encoding of numbers during interop. Some users rely on lenient parsing of
+  numbers as strings, which can lead to problems if interop results in int/long literals being converted to
+  floating-point types (which changes the value of the resulting string!). Slack would totally never rely on this
   behavior, no way.
 * Update to Kotlin `1.4.30`
 
