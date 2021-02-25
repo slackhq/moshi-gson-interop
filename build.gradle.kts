@@ -27,7 +27,6 @@ plugins {
 }
 
 repositories {
-  mavenCentral()
   exclusiveContent {
     forRepository {
       maven {
@@ -42,6 +41,7 @@ repositories {
       includeModule("org.jetbrains", "markdown")
     }
   }
+  mavenCentral()
 }
 
 java {
