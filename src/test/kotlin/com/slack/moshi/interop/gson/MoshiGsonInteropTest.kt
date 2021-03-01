@@ -21,10 +21,13 @@ import com.google.gson.TypeAdapter
 import com.google.gson.annotations.SerializedName
 import com.google.gson.internal.bind.JsonTreeWriter
 import com.google.gson.reflect.TypeToken
+import com.slack.moshi.interop.gson.Serializer.GSON
 import com.squareup.moshi.Json
+import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.adapter
+import com.squareup.moshi.internal.NonNullJsonAdapter
 import com.squareup.moshi.internal.NullSafeJsonAdapter
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import org.junit.Assert.fail
@@ -314,6 +317,40 @@ class MoshiGsonInteropTest {
     // Now read the serialized one with a real instance and ensure they're equal
     val secondInstance = moshi.adapter<MoshiClass>().fromJson(serialized)
     assertThat(secondInstance).isEqualTo(instance)
+  }
+
+  @Test
+  fun shortCircuitTest() {
+    // This test ensures that even if a standard class checker at the bottom can claim a type, a
+    // registered one before it will take precedence.
+    val preferGsonEnums = EnumClassChecker(GSON)
+    val interop = Moshi.Builder()
+      .addLast(KotlinJsonAdapterFactory())
+      .build()
+      .interopBuilder(GsonBuilder().create())
+      .addClassChecker(preferGsonEnums)
+      .addGsonType<Int>()
+      .logger(::println)
+      .build()
+    val moshi = interop.moshi
+
+    // Even though moshi can handle this by default, we short-circuited it to choose gson anyway
+    moshi.adapter<SimpleEnum>().assertIsJsonAdapterInstanceOf<GsonDelegatingJsonAdapter<*>>()
+    moshi.adapter<Int>().assertIsJsonAdapterInstanceOf<GsonDelegatingJsonAdapter<*>>()
+  }
+
+  // A simple enum that both moshi and gson could handle
+  enum class SimpleEnum {
+    INSTANCE
+  }
+
+  private inline fun <reified T : JsonAdapter<*>> JsonAdapter<*>.assertIsJsonAdapterInstanceOf() {
+    val adapter = when (this) {
+      is NonNullJsonAdapter<*> -> delegate()
+      is NullSafeJsonAdapter<*> -> delegate()
+      else -> this
+    }
+    assertThat(adapter).isInstanceOf(T::class.java)
   }
 }
 
