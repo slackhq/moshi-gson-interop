@@ -1,6 +1,14 @@
 Changelog
 =========
 
+0.4.2
+-----
+
+_2021-3-01_
+
+* **Fix:** interop would always take Moshi or Gson if any ClassChecker supported it, preventing use
+of short-circuiting custom checkers from pre-empting them. This is now fixed!
+
 0.4.1
 -----
 
