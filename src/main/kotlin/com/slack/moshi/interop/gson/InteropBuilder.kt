@@ -146,6 +146,8 @@ private interface InteropFactory {
   val checkers: List<ClassChecker>
 
   fun Class<*>.shouldUse(serializer: Serializer): Boolean {
+    // It's important to take the first nonnull type here, not just "any", as we want to defer to
+    // any checker that claims a type
     return checkers.asSequence()
       .mapNotNull { it.serializerFor(this) }
       .firstOrNull() == serializer
@@ -163,8 +165,6 @@ private class MoshiGsonInteropJsonAdapterFactory(
 ) : JsonAdapter.Factory, InteropFactory {
   override fun create(type: Type, annotations: Set<Annotation>, moshi: Moshi): JsonAdapter<*>? {
     if (annotations.isNotEmpty() || type !is Class<*>) return null
-    // It's important to take the first nonnull type here, not just "any", as we want to defer to
-    // any checker that claims a type
     return if (type.shouldUse(MOSHI)) {
       moshi.nextAdapter<Any>(this, type, annotations)
     } else {
