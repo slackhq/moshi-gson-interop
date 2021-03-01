@@ -141,18 +141,31 @@ private class MoshiGsonInteropImpl(
     .create()
 }
 
+private interface InteropFactory {
+  val interop: MoshiGsonInterop
+  val checkers: List<ClassChecker>
+
+  fun Class<*>.shouldUse(serializer: Serializer): Boolean {
+    // It's important to take the first nonnull type here, not just "any", as we want to defer to
+    // any checker that claims a type
+    return checkers.asSequence()
+      .mapNotNull { it.serializerFor(this) }
+      .firstOrNull() == serializer
+  }
+}
+
 /**
  * An interop-ing [JsonAdapter.Factory] that tries to intelligently defer to a `gson` instance for
  * appropriate types.
  */
 private class MoshiGsonInteropJsonAdapterFactory(
-  private val interop: MoshiGsonInterop,
-  private val checkers: List<ClassChecker>,
+  override val interop: MoshiGsonInterop,
+  override val checkers: List<ClassChecker>,
   private val logger: ((String) -> Unit)?,
-) : JsonAdapter.Factory {
+) : JsonAdapter.Factory, InteropFactory {
   override fun create(type: Type, annotations: Set<Annotation>, moshi: Moshi): JsonAdapter<*>? {
     if (annotations.isNotEmpty() || type !is Class<*>) return null
-    return if (checkers.any { it.serializerFor(type) == MOSHI }) {
+    return if (type.shouldUse(MOSHI)) {
       moshi.nextAdapter<Any>(this, type, annotations)
     } else {
       logger?.invoke("⮑ Gson: $type")
@@ -187,16 +200,16 @@ internal class GsonDelegatingJsonAdapter<T>(
  * appropriate types.
  */
 private class MoshiGsonInteropTypeAdapterFactory(
-  private val interop: MoshiGsonInterop,
-  private val checkers: List<ClassChecker>,
+  override val interop: MoshiGsonInterop,
+  override val checkers: List<ClassChecker>,
   private val logger: ((String) -> Unit)?
-) : TypeAdapterFactory {
+) : TypeAdapterFactory, InteropFactory {
   override fun <T> create(gson: Gson, typeToken: TypeToken<T>): TypeAdapter<T>? {
     val type = typeToken.type
     if (type !is Class<*>) return null
 
     @Suppress("UNCHECKED_CAST")
-    return if (checkers.any { it.serializerFor(type) == GSON }) {
+    return if (type.shouldUse(GSON)) {
       gson.getDelegateAdapter(this, typeToken)
     } else {
       logger?.invoke("⮑ Moshi: $type")
