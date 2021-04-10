@@ -105,12 +105,12 @@ spotless {
   }
 }
 
-val moshiVersion = "1.11.0"
+val moshiVersion = "1.12.0"
 dependencies {
   implementation("com.google.code.gson:gson:2.8.6")
   implementation("com.squareup.moshi:moshi:$moshiVersion")
 
   testImplementation("com.squareup.moshi:moshi-kotlin:$moshiVersion")
-  testImplementation("junit:junit:4.13.1")
+  testImplementation("junit:junit:4.13.2")
   testImplementation("com.google.truth:truth:1.1.2")
 }
