@@ -19,34 +19,24 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.net.URL
 
 plugins {
-  kotlin("jvm") version "1.4.30"
-  id("org.jetbrains.dokka") version "1.4.20"
-  id("com.diffplug.spotless") version "5.9.0"
-  id("com.vanniktech.maven.publish") version "0.13.0"
-  id("io.gitlab.arturbosch.detekt") version "1.15.0"
+  kotlin("jvm") version "1.5.30"
+  id("org.jetbrains.dokka") version "1.5.0"
+  id("com.diffplug.spotless") version "5.15.0"
+  id("com.vanniktech.maven.publish") version "0.17.0"
+  id("io.gitlab.arturbosch.detekt") version "1.18.1"
 }
 
 repositories {
   mavenCentral()
-  exclusiveContent {
-    forRepository {
-      maven {
-        name = "JCenter"
-        setUrl("https://jcenter.bintray.com/")
-      }
-    }
-    filter {
-      // Required for Dokka
-      includeModule("org.jetbrains.kotlinx", "kotlinx-html-jvm")
-      includeGroup("org.jetbrains.dokka")
-      includeModule("org.jetbrains", "markdown")
-    }
-  }
 }
 
 java {
-  sourceCompatibility = JavaVersion.VERSION_1_8
-  targetCompatibility = JavaVersion.VERSION_1_8
+  toolchain {
+    languageVersion.set(JavaLanguageVersion.of(11))
+  }
+  tasks.withType<JavaCompile>().configureEach {
+    options.release.set(8)
+  }
 }
 
 tasks.withType<KotlinCompile>().configureEach {
@@ -87,7 +77,7 @@ spotless {
     trimTrailingWhitespace()
     endWithNewline()
   }
-  val ktlintVersion = "0.39.0"
+  val ktlintVersion = "0.42.1"
   val ktlintUserData = mapOf("indent_size" to "2", "continuation_indent_size" to "2")
   kotlin {
     target("**/*.kt")
@@ -107,7 +97,7 @@ spotless {
 
 val moshiVersion = "1.12.0"
 dependencies {
-  implementation("com.google.code.gson:gson:2.8.6")
+  implementation("com.google.code.gson:gson:2.8.8")
   implementation("com.squareup.moshi:moshi:$moshiVersion")
 
   testImplementation("com.squareup.moshi:moshi-kotlin:$moshiVersion")
