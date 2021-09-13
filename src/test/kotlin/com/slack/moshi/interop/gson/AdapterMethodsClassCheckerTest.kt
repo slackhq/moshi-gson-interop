@@ -52,6 +52,7 @@ class AdapterMethodsClassCheckerTest {
   }
 }
 
+@Suppress("EmptyFunctionBlock")
 class ThingWithAdapterMethods {
   @FromJson
   fun fromJson() {
@@ -62,18 +63,21 @@ class ThingWithAdapterMethods {
   }
 }
 
+@Suppress("EmptyFunctionBlock")
 class ThingWithJsonFromJson {
   @FromJson
   fun fromJson() {
   }
 }
 
+@Suppress("EmptyFunctionBlock")
 class ThingWithJsonToJson {
   @ToJson
   fun toJson() {
   }
 }
 
+@Suppress("EmptyFunctionBlock", "UnnecessaryAbstractClass")
 abstract class BaseClassWithFunctions {
   @FromJson
   fun fromJson() {
