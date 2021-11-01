@@ -19,9 +19,9 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.net.URL
 
 plugins {
-  kotlin("jvm") version "1.5.30"
-  id("org.jetbrains.dokka") version "1.5.0"
-  id("com.diffplug.spotless") version "5.15.0"
+  kotlin("jvm") version "1.5.31"
+  id("org.jetbrains.dokka") version "1.531"
+  id("com.diffplug.spotless") version "5.17.0"
   id("com.vanniktech.maven.publish") version "0.17.0"
   id("io.gitlab.arturbosch.detekt") version "1.18.1"
 }
@@ -97,7 +97,7 @@ spotless {
 
 val moshiVersion = "1.12.0"
 dependencies {
-  implementation("com.google.code.gson:gson:2.8.8")
+  implementation("com.google.code.gson:gson:2.8.9")
   implementation("com.squareup.moshi:moshi:$moshiVersion")
 
   testImplementation("com.squareup.moshi:moshi-kotlin:$moshiVersion")
