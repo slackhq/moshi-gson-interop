@@ -85,7 +85,11 @@ public class EnumClassChecker(
       @Suppress("UNCHECKED_CAST")
       val constants: Array<out Enum<*>> = rawType.enumConstants as Array<out Enum<*>>
       for (constant in constants) {
-        val field = rawType.getField(constant.name)
+        val field = try {
+          rawType.getField(constant.name)
+        } catch (e: NoSuchFieldException) {
+          return null
+        }
         if (field.isAnnotationPresent(SerializedName::class.java)) {
           logger?.invoke("🧠 Picking GSON for enum $rawType based on @SerializedName-annotated member $field.")
           return GSON
