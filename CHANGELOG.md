@@ -6,7 +6,7 @@ Changelog
 
 _2022-06-07_
 
-* **Fix:** try-catch field lookups in `EnumClassChecker` to avoid crashing if the field is missing (such 
+* **Fix:** try-catch field lookups in `EnumClassChecker` to avoid crashing if the field is missing (such
 as in minified builds).
 
 Dependency updates
