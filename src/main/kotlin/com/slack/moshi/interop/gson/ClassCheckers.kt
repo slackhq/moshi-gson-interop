@@ -85,6 +85,7 @@ public class EnumClassChecker(
       @Suppress("UNCHECKED_CAST")
       val constants: Array<out Enum<*>> = rawType.enumConstants as Array<out Enum<*>>
       for (constant in constants) {
+        @Suppress("SwallowedException")
         val field = try {
           rawType.getField(constant.name)
         } catch (e: NoSuchFieldException) {
