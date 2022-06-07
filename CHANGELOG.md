@@ -1,10 +1,24 @@
 Changelog
 =========
 
+0.4.3
+-----
+
+_2022-06-07_
+
+* **Fix:** try-catch field lookups in `EnumClassChecker` to avoid crashing if the field is missing (such 
+as in minified builds).
+
+Dependency updates
+```
+Kotlin 1.5.31
+Gson 2.8.9
+```
+
 0.4.2
 -----
 
-_2021-3-01_
+_2021-03-01_
 
 * **Fix:** interop would always take Moshi or Gson if any ClassChecker supported it, preventing use
 of short-circuiting custom checkers from pre-empting them. This is now fixed!
@@ -12,7 +26,7 @@ of short-circuiting custom checkers from pre-empting them. This is now fixed!
 0.4.1
 -----
 
-_2021-2-04_
+_2021-02-04_
 
 * **Fix:** Best-effort preserve the exact encoding of numbers during interop. Some users rely on lenient parsing of
   numbers as strings, which can lead to problems if interop results in int/long literals being converted to
