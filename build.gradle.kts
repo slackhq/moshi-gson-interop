@@ -17,6 +17,7 @@ import com.diffplug.spotless.LineEnding
 import io.gitlab.arturbosch.detekt.Detekt
 import java.net.URL
 import org.jetbrains.dokka.gradle.DokkaTask
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
@@ -36,14 +37,12 @@ java {
 
 tasks.withType<KotlinCompile>().configureEach {
   val isTest = name == "compileTestKotlin"
-  kotlinOptions {
-    jvmTarget = "1.8"
-    val argsList = mutableListOf("-progressive")
+  compilerOptions {
+    jvmTarget.set(JvmTarget.JVM_1_8)
+    freeCompilerArgs.add("-progressive")
     if (isTest) {
-      argsList.add("-Xopt-in=kotlin.ExperimentalStdlibApi")
+      freeCompilerArgs.add("-opt-in=kotlin.ExperimentalStdlibApi")
     }
-    @Suppress("SuspiciousCollectionReassignment")
-    freeCompilerArgs += argsList
   }
 }
 

@@ -21,7 +21,9 @@ import com.google.gson.TypeAdapter
 import com.google.gson.TypeAdapterFactory
 import com.google.gson.internal.bind.JsonTreeWriter
 import com.google.gson.reflect.TypeToken
+import com.google.gson.stream.JsonReader as GsonReader
 import com.google.gson.stream.JsonToken
+import com.google.gson.stream.JsonWriter as GsonWriter
 import com.slack.moshi.interop.gson.Serializer.GSON
 import com.slack.moshi.interop.gson.Serializer.MOSHI
 import com.squareup.moshi.JsonAdapter
@@ -30,15 +32,14 @@ import com.squareup.moshi.JsonReader
 import com.squareup.moshi.JsonReader.Token
 import com.squareup.moshi.JsonWriter
 import com.squareup.moshi.Moshi
-import okio.Buffer
 import java.lang.reflect.Type
-import com.google.gson.stream.JsonReader as GsonReader
-import com.google.gson.stream.JsonWriter as GsonWriter
+import okio.Buffer
 
 /**
  * A simple builder API for customizing interop logic between a given [moshi] and [gson] instance.
  */
-public class InteropBuilder internal constructor(
+public class InteropBuilder
+internal constructor(
   private val moshi: Moshi,
   private val gson: Gson,
 ) {
@@ -57,12 +58,8 @@ public class InteropBuilder internal constructor(
     this.defaultSerializer = serializer
   }
 
-  /**
-   * Optional callback for any internal logging. Useful for debugging purposes.
-   */
-  public fun logger(logger: ((String) -> Unit)?): InteropBuilder = apply {
-    this.logger = logger
-  }
+  /** Optional callback for any internal logging. Useful for debugging purposes. */
+  public fun logger(logger: ((String) -> Unit)?): InteropBuilder = apply { this.logger = logger }
 
   public fun addMoshiType(clazz: Class<*>): InteropBuilder = apply {
     checkers += TypeChecker(MOSHI, clazz.kotlin.javaObjectType)
@@ -73,15 +70,13 @@ public class InteropBuilder internal constructor(
   }
 
   public fun addMoshiFactory(factory: JsonAdapter.Factory): InteropBuilder = apply {
-    checkers += FactoryChecker(MOSHI) { rawType ->
-      factory.create(rawType, emptySet(), moshi) != null
-    }
+    checkers +=
+      FactoryChecker(MOSHI) { rawType -> factory.create(rawType, emptySet(), moshi) != null }
   }
 
   public fun addGsonFactory(factory: TypeAdapterFactory): InteropBuilder = apply {
-    checkers += FactoryChecker(GSON) { rawType ->
-      factory.create(gson, TypeToken.get(rawType)) != null
-    }
+    checkers +=
+      FactoryChecker(GSON) { rawType -> factory.create(gson, TypeToken.get(rawType)) != null }
   }
 
   public fun addClassChecker(classChecker: ClassChecker): InteropBuilder = apply {
@@ -132,13 +127,14 @@ private class MoshiGsonInteropImpl(
   logger: ((String) -> Unit)?,
 ) : MoshiGsonInterop {
 
-  override val moshi: Moshi = seedMoshi.newBuilder()
-    .add(MoshiGsonInteropJsonAdapterFactory(this, checkers, logger))
-    .build()
+  override val moshi: Moshi =
+    seedMoshi.newBuilder().add(MoshiGsonInteropJsonAdapterFactory(this, checkers, logger)).build()
 
-  override val gson: Gson = seedGson.newBuilder()
-    .registerTypeAdapterFactory(MoshiGsonInteropTypeAdapterFactory(this, checkers, logger))
-    .create()
+  override val gson: Gson =
+    seedGson
+      .newBuilder()
+      .registerTypeAdapterFactory(MoshiGsonInteropTypeAdapterFactory(this, checkers, logger))
+      .create()
 }
 
 private interface InteropFactory {
@@ -148,9 +144,7 @@ private interface InteropFactory {
   fun Class<*>.shouldUse(serializer: Serializer): Boolean {
     // It's important to take the first nonnull type here, not just "any", as we want to defer to
     // any checker that claims a type
-    return checkers.asSequence()
-      .mapNotNull { it.serializerFor(this) }
-      .firstOrNull() == serializer
+    return checkers.asSequence().mapNotNull { it.serializerFor(this) }.firstOrNull() == serializer
   }
 }
 
@@ -214,17 +208,18 @@ private class MoshiGsonInteropTypeAdapterFactory(
     } else {
       logger?.invoke("⮑ Moshi: $type")
       MoshiDelegatingTypeAdapter(interop.moshi.adapter<Any>(type)).nullSafe()
-    } as TypeAdapter<T>
+    }
+      as TypeAdapter<T>
   }
 }
 
-internal class MoshiDelegatingTypeAdapter<T>(
-  private val delegate: JsonAdapter<T>
-) : TypeAdapter<T>() {
+internal class MoshiDelegatingTypeAdapter<T>(private val delegate: JsonAdapter<T>) :
+  TypeAdapter<T>() {
   override fun write(writer: GsonWriter, value: T?) {
-    val adjustedDelegate = delegate
-      .run { if (writer.serializeNulls) serializeNulls() else this }
-      .run { if (writer.isLenient) lenient() else this }
+    val adjustedDelegate =
+      delegate
+        .run { if (writer.serializeNulls) serializeNulls() else this }
+        .run { if (writer.isLenient) lenient() else this }
     // Write to a raw JSON string first, then stream it back into a GSON writer
     // Moshi's toJsonValue() will up-convert all numbers to Double. We want to preserve data
     // exactly as-is!
@@ -245,16 +240,12 @@ internal class MoshiDelegatingTypeAdapter<T>(
   override fun read(reader: GsonReader): T? {
     // First read it into a buffer
     val buffer = Buffer()
-    JsonWriter.of(buffer).use { writer ->
-      reader.readTo(writer)
-    }
+    JsonWriter.of(buffer).use { writer -> reader.readTo(writer) }
 
     // Now write out an encoded string (to ensure we have valid JSON)
     val encodedString = buffer.readUtf8()
 
-    return delegate
-      .run { if (reader.isLenient) lenient() else this }
-      .fromJson(encodedString)
+    return delegate.run { if (reader.isLenient) lenient() else this }.fromJson(encodedString)
   }
 }
 
@@ -309,7 +300,9 @@ private fun GsonReader.readTo(writer: JsonWriter) {
     JsonToken.NAME -> {
       writer.value(nextName())
     }
-    JsonToken.END_DOCUMENT, JsonToken.END_OBJECT, JsonToken.END_ARRAY -> {
+    JsonToken.END_DOCUMENT,
+    JsonToken.END_OBJECT,
+    JsonToken.END_ARRAY -> {
       throw JsonParseException("Unexpected token $token at $path")
     }
   }
@@ -352,7 +345,10 @@ private fun JsonReader.readTo(writer: GsonWriter) {
     }
     Token.BOOLEAN -> writer.value(nextBoolean())
     Token.NULL -> writer.value(nextNull<String>())
-    Token.NAME, Token.END_ARRAY, Token.END_OBJECT, Token.END_DOCUMENT -> {
+    Token.NAME,
+    Token.END_ARRAY,
+    Token.END_OBJECT,
+    Token.END_DOCUMENT -> {
       throw JsonDataException("Unexpected token $token at $path")
     }
   }

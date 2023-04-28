@@ -47,45 +47,32 @@ class AdapterMethodsClassCheckerTest {
 
   @Test
   fun ignoreOtherStuff() {
-    assertThat(AdapterMethodsClassChecker.serializerFor(String::class.java))
-      .isNull()
+    assertThat(AdapterMethodsClassChecker.serializerFor(String::class.java)).isNull()
   }
 }
 
 @Suppress("EmptyFunctionBlock")
 class ThingWithAdapterMethods {
-  @FromJson
-  fun fromJson() {
-  }
+  @FromJson fun fromJson() {}
 
-  @ToJson
-  fun toJson() {
-  }
+  @ToJson fun toJson() {}
 }
 
 @Suppress("EmptyFunctionBlock")
 class ThingWithJsonFromJson {
-  @FromJson
-  fun fromJson() {
-  }
+  @FromJson fun fromJson() {}
 }
 
 @Suppress("EmptyFunctionBlock")
 class ThingWithJsonToJson {
-  @ToJson
-  fun toJson() {
-  }
+  @ToJson fun toJson() {}
 }
 
 @Suppress("EmptyFunctionBlock", "UnnecessaryAbstractClass")
 abstract class BaseClassWithFunctions {
-  @FromJson
-  fun fromJson() {
-  }
+  @FromJson fun fromJson() {}
 
-  @ToJson
-  fun toJson() {
-  }
+  @ToJson fun toJson() {}
 }
 
 class SubclassWithoutFunctions : BaseClassWithFunctions()
