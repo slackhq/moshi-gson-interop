@@ -19,14 +19,17 @@ import com.slack.moshi.interop.gson.Serializer.MOSHI
 import com.squareup.moshi.FromJson
 import com.squareup.moshi.ToJson
 
-/** Checks if a class has any [FromJson] or [ToJson] annotated methods and should be used with Moshi. */
+/**
+ * Checks if a class has any [FromJson] or [ToJson] annotated methods and should be used with Moshi.
+ */
 public object AdapterMethodsClassChecker : ClassChecker {
   override fun serializerFor(rawType: Class<*>): Serializer? {
     var clazz: Class<*>? = rawType
     while (clazz != Any::class.java && clazz != null) {
       for (method in clazz.declaredMethods) {
-        if (method.isAnnotationPresent(ToJson::class.java) ||
-          method.isAnnotationPresent(FromJson::class.java)
+        if (
+          method.isAnnotationPresent(ToJson::class.java) ||
+            method.isAnnotationPresent(FromJson::class.java)
         ) {
           return MOSHI
         }

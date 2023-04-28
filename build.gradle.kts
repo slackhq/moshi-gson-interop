@@ -13,89 +13,81 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import com.diffplug.spotless.LineEnding
 import io.gitlab.arturbosch.detekt.Detekt
-import org.jetbrains.dokka.gradle.DokkaTask
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.net.URL
+import org.jetbrains.dokka.gradle.DokkaTask
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
   kotlin("jvm") version "1.8.21"
   id("org.jetbrains.dokka") version "1.8.10"
-  id("com.diffplug.spotless") version "5.17.0"
+  id("com.diffplug.spotless") version "6.18.0"
   id("com.vanniktech.maven.publish") version "0.17.0"
   id("io.gitlab.arturbosch.detekt") version "1.22.0"
 }
 
-repositories {
-  mavenCentral()
-}
+repositories { mavenCentral() }
 
 java {
-  toolchain {
-    languageVersion.set(JavaLanguageVersion.of(11))
-  }
-  tasks.withType<JavaCompile>().configureEach {
-    options.release.set(8)
-  }
+  toolchain { languageVersion.set(JavaLanguageVersion.of(11)) }
+  tasks.withType<JavaCompile>().configureEach { options.release.set(8) }
 }
 
 tasks.withType<KotlinCompile>().configureEach {
   val isTest = name == "compileTestKotlin"
-  kotlinOptions {
-    jvmTarget = "1.8"
-    val argsList = mutableListOf("-progressive")
+  compilerOptions {
+    jvmTarget.set(JvmTarget.JVM_1_8)
+    freeCompilerArgs.add("-progressive")
     if (isTest) {
-      argsList.add("-Xopt-in=kotlin.ExperimentalStdlibApi")
+      freeCompilerArgs.add("-opt-in=kotlin.ExperimentalStdlibApi")
     }
-    @Suppress("SuspiciousCollectionReassignment")
-    freeCompilerArgs += argsList
   }
 }
 
-tasks.withType<Detekt>().configureEach {
-  jvmTarget = "1.8"
-}
+tasks.withType<Detekt>().configureEach { jvmTarget = "1.8" }
 
 tasks.named<DokkaTask>("dokkaHtml") {
   outputDirectory.set(rootDir.resolve("docs/0.x"))
   dokkaSourceSets.configureEach {
     skipDeprecated.set(true)
-    externalDocumentationLink {
-      url.set(URL("https://square.github.io/moshi/1.x/moshi/"))
-    }
+    externalDocumentationLink { url.set(URL("https://square.github.io/moshi/1.x/moshi/")) }
     // No GSON doc because they host on javadoc.io, which Dokka can't parse.
   }
 }
 
-kotlin {
-  explicitApi()
-}
+kotlin { explicitApi() }
 
 spotless {
+  lineEndings = LineEnding.PLATFORM_NATIVE
   format("misc") {
     target("*.md", ".gitignore")
     trimTrailingWhitespace()
     endWithNewline()
   }
-  val ktlintVersion = "0.42.1"
-  val ktlintUserData = mapOf("indent_size" to "2", "continuation_indent_size" to "2")
+  val ktfmtVersion = "0.43"
   kotlin {
     target("**/*.kt")
-    ktlint(ktlintVersion).userData(ktlintUserData)
+    ktfmt(ktfmtVersion).googleStyle()
     trimTrailingWhitespace()
     endWithNewline()
     licenseHeaderFile("spotless/spotless.kt")
     targetExclude("**/spotless.kt")
   }
   kotlinGradle {
-    ktlint(ktlintVersion).userData(ktlintUserData)
+    ktfmt(ktfmtVersion).googleStyle()
     trimTrailingWhitespace()
     endWithNewline()
-    licenseHeaderFile("spotless/spotless.kt", "(import|plugins|buildscript|dependencies|pluginManagement)")
+    licenseHeaderFile(
+      "spotless/spotless.kt",
+      "(import|plugins|buildscript|dependencies|pluginManagement)"
+    )
   }
 }
 
-val moshiVersion = "1.12.0"
+val moshiVersion = "1.14.0"
+
 dependencies {
   implementation("com.google.code.gson:gson:2.10.1")
   implementation("com.squareup.moshi:moshi:$moshiVersion")

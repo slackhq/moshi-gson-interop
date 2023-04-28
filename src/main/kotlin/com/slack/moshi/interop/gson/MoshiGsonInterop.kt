@@ -40,4 +40,5 @@ public interface MoshiGsonInterop {
 }
 
 public operator fun MoshiGsonInterop.component1(): Moshi = moshi
+
 public operator fun MoshiGsonInterop.component2(): Gson = gson

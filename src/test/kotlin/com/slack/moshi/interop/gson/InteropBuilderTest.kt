@@ -31,22 +31,23 @@ import org.junit.Test
 class InteropBuilderTest {
   @Test
   fun factories() {
-    val builder = Moshi.Builder().build()
-      .interopBuilder(GsonBuilder().create())
+    val builder = Moshi.Builder().build().interopBuilder(GsonBuilder().create())
 
     builder.addGsonType<String>()
     builder.addMoshiType<Int>()
     builder.addGsonType<List<String>>() // Interesting because only the List is captured
-    builder.addGsonFactory(object : TypeAdapterFactory {
-      override fun <T : Any?> create(gson: Gson, type: TypeToken<T>): TypeAdapter<T>? {
-        return if (type.rawType == Boolean::class.javaObjectType) {
-          @Suppress("UNCHECKED_CAST")
-          gson.getAdapter(Boolean::class.java) as TypeAdapter<T>
-        } else {
-          null
+    builder.addGsonFactory(
+      object : TypeAdapterFactory {
+        override fun <T : Any?> create(gson: Gson, type: TypeToken<T>): TypeAdapter<T>? {
+          return if (type.rawType == Boolean::class.javaObjectType) {
+            @Suppress("UNCHECKED_CAST")
+            gson.getAdapter(Boolean::class.java) as TypeAdapter<T>
+          } else {
+            null
+          }
         }
       }
-    })
+    )
     builder.addMoshiFactory { type, _, moshi ->
       if (Types.getRawType(type) == Double::class.javaObjectType) {
         moshi.adapter<Double>()
@@ -65,11 +66,7 @@ class InteropBuilderTest {
 
   class CompositeChecker(private val checkers: List<ClassChecker>) : ClassChecker {
     override fun serializerFor(rawType: Class<*>): Serializer? {
-      return checkers
-        .mapNotNull { checker ->
-          checker.serializerFor(rawType)
-        }
-        .firstOrNull()
+      return checkers.mapNotNull { checker -> checker.serializerFor(rawType) }.firstOrNull()
     }
   }
 }

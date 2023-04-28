@@ -34,16 +34,17 @@ import org.junit.Assert.fail
 import org.junit.Test
 
 class MoshiGsonInteropTest {
-  private val interop = Moshi.Builder()
-    .addLast(KotlinJsonAdapterFactory())
-    .build()
-    .interopBuilder(GsonBuilder().create())
-    .logger(::println)
-    .build()
+  private val interop =
+    Moshi.Builder()
+      .addLast(KotlinJsonAdapterFactory())
+      .build()
+      .interopBuilder(GsonBuilder().create())
+      .logger(::println)
+      .build()
   private val moshi = interop.moshi
   private val gson = interop.gson
 
-  //language=JSON
+  // language=JSON
   private val integrationJson =
     """
       {
@@ -83,9 +84,10 @@ class MoshiGsonInteropTest {
           }
         }
       }
-    """.trimIndent()
+    """
+      .trimIndent()
 
-  //language=JSON
+  // language=JSON
   private val complexJson =
     """
     {
@@ -97,11 +99,11 @@ class MoshiGsonInteropTest {
         }
       }
     }
-    """.trimIndent()
+    """
+      .trimIndent()
 
-  private val complexInstance = Complex(
-    ComplexNestedOne(ComplexNestedTwo(ComplexNestedThree("value!")))
-  )
+  private val complexInstance =
+    Complex(ComplexNestedOne(ComplexNestedTwo(ComplexNestedThree("value!"))))
 
   @Test
   fun simpleMoshiDelegation() {
@@ -116,13 +118,14 @@ class MoshiGsonInteropTest {
     // Can't check if it's a nullsafe adapter like moshi, so we just run it
     val adapter = gson.getAdapter(SimpleMoshiClass::class.java)
 
-    //language=JSON
+    // language=JSON
     val json =
       """
       {
         "value": "moshi!"
       }
-      """.trimIndent()
+      """
+        .trimIndent()
 
     val instance = adapter.fromJson(json)
     assertThat(instance).isEqualTo(SimpleMoshiClass("moshi!"))
@@ -132,19 +135,20 @@ class MoshiGsonInteropTest {
   fun integrationMoshi() {
     val adapter = moshi.adapter<MoshiClass>()
     val instance = adapter.fromJson(integrationJson)!!
-    val expected = MoshiClass(
-      SimpleMoshiClass("moshi!"),
-      SimpleGsonClass("gson!"),
-      RegularEnum.TYPE,
-      MoshiEnum.TYPE,
-      GsonEnum.TYPE,
-      listOf(SimpleMoshiClass("moshi!")),
-      listOf(SimpleGsonClass("gson!")),
-      SimpleGenericMoshiClass(MoshiEnum.TYPE),
-      SimpleGenericGsonClass(GsonEnum.TYPE),
-      SimpleMixedGenericGsonClass(SimpleGenericMoshiClass(GsonEnum.TYPE)),
-      SimpleMixedGenericMoshiClass(SimpleGenericGsonClass(MoshiEnum.TYPE))
-    )
+    val expected =
+      MoshiClass(
+        SimpleMoshiClass("moshi!"),
+        SimpleGsonClass("gson!"),
+        RegularEnum.TYPE,
+        MoshiEnum.TYPE,
+        GsonEnum.TYPE,
+        listOf(SimpleMoshiClass("moshi!")),
+        listOf(SimpleGsonClass("gson!")),
+        SimpleGenericMoshiClass(MoshiEnum.TYPE),
+        SimpleGenericGsonClass(GsonEnum.TYPE),
+        SimpleMixedGenericGsonClass(SimpleGenericMoshiClass(GsonEnum.TYPE)),
+        SimpleMixedGenericMoshiClass(SimpleGenericGsonClass(MoshiEnum.TYPE))
+      )
     assertThat(instance).isEqualTo(expected)
     val serialized = adapter.toJson(instance)
     val secondInstance = adapter.fromJson(serialized)
@@ -155,19 +159,20 @@ class MoshiGsonInteropTest {
   fun integrationGson() {
     val adapter = gson.getAdapter(GsonClass::class.java)
     val instance = adapter.fromJson(integrationJson)!!
-    val expected = GsonClass(
-      SimpleMoshiClass("moshi!"),
-      SimpleGsonClass("gson!"),
-      RegularEnum.TYPE,
-      MoshiEnum.TYPE,
-      GsonEnum.TYPE,
-      listOf(SimpleMoshiClass("moshi!")),
-      listOf(SimpleGsonClass("gson!")),
-      SimpleGenericMoshiClass(MoshiEnum.TYPE),
-      SimpleGenericGsonClass(GsonEnum.TYPE),
-      SimpleMixedGenericGsonClass(SimpleGenericMoshiClass(GsonEnum.TYPE)),
-      SimpleMixedGenericMoshiClass(SimpleGenericGsonClass(MoshiEnum.TYPE))
-    )
+    val expected =
+      GsonClass(
+        SimpleMoshiClass("moshi!"),
+        SimpleGsonClass("gson!"),
+        RegularEnum.TYPE,
+        MoshiEnum.TYPE,
+        GsonEnum.TYPE,
+        listOf(SimpleMoshiClass("moshi!")),
+        listOf(SimpleGsonClass("gson!")),
+        SimpleGenericMoshiClass(MoshiEnum.TYPE),
+        SimpleGenericGsonClass(GsonEnum.TYPE),
+        SimpleMixedGenericGsonClass(SimpleGenericMoshiClass(GsonEnum.TYPE)),
+        SimpleMixedGenericMoshiClass(SimpleGenericGsonClass(MoshiEnum.TYPE))
+      )
     assertThat(instance).isEqualTo(expected)
     val serialized = adapter.toJson(instance)
     val secondInstance = adapter.fromJson(serialized)
@@ -208,12 +213,9 @@ class MoshiGsonInteropTest {
   @Test
   fun gsonEnumCollections() {
     @Suppress("UNCHECKED_CAST")
-    val adapter = gson.getAdapter(
-      TypeToken.getParameterized(
-        List::class.java,
-        GsonEnum::class.java
-      )
-    ) as TypeAdapter<List<GsonEnum>>
+    val adapter =
+      gson.getAdapter(TypeToken.getParameterized(List::class.java, GsonEnum::class.java))
+        as TypeAdapter<List<GsonEnum>>
     val expected = listOf(GsonEnum.TYPE)
     val json = "[\"__type\"]"
     val instance = adapter.fromJson(json)
@@ -225,62 +227,56 @@ class MoshiGsonInteropTest {
   @Test
   fun customClassChecker() {
     // An interop Moshi instance set to _always_ claim classes
-    val (moshi, _) = Moshi.Builder()
-      .addLast(KotlinJsonAdapterFactory())
-      .build()
-      .interopBuilder(GsonBuilder().create())
-      .addClassChecker { Serializer.MOSHI }
-      .build()
+    val (moshi, _) =
+      Moshi.Builder()
+        .addLast(KotlinJsonAdapterFactory())
+        .build()
+        .interopBuilder(GsonBuilder().create())
+        .addClassChecker { Serializer.MOSHI }
+        .build()
 
     val gsonClassAdapter = moshi.adapter<SimpleGsonClass>()
     check(gsonClassAdapter is NullSafeJsonAdapter)
     val delegate = gsonClassAdapter.delegate()
     // We set it to _always_ use Moshi, so we should never delegate here
     check(delegate !is GsonDelegatingJsonAdapter)
-    // A little ugly to rely on toString, but just to confirm we're using the KotlinJsonAdapter version
-    assertThat(delegate.toString()).isEqualTo(
-      "KotlinJsonAdapter(${SimpleGsonClass::class.java.canonicalName})"
-    )
+    // A little ugly to rely on toString, but just to confirm we're using the KotlinJsonAdapter
+    // version
+    assertThat(delegate.toString())
+      .isEqualTo("KotlinJsonAdapter(${SimpleGsonClass::class.java.canonicalName})")
   }
 
   @Test
   fun serializeNulls() {
-    val withoutNulls = moshi.adapter(GsonNumber::class.java)
-      .toJson(GsonNumber(value = null))
+    val withoutNulls = moshi.adapter(GsonNumber::class.java).toJson(GsonNumber(value = null))
     assertThat(withoutNulls).isEqualTo("{}")
-    val withNulls = moshi.adapter(GsonNumber::class.java)
-      .serializeNulls()
-      .toJson(GsonNumber(value = null))
+    val withNulls =
+      moshi.adapter(GsonNumber::class.java).serializeNulls().toJson(GsonNumber(value = null))
     assertThat(withNulls).isEqualTo("""{"value":null}""")
   }
 
   @Test
   fun lenientRead() {
     try {
-      moshi.adapter(GsonNumber::class.java)
-        .fromJson("""{"value":NaN}""")
+      moshi.adapter(GsonNumber::class.java).fromJson("""{"value":NaN}""")
       fail()
     } catch (err: Exception) {
       assertThat(err.message).startsWith("Use JsonReader.setLenient(true) to accept malformed JSON")
     }
-    val withNaN = moshi.adapter(GsonNumber::class.java)
-      .lenient()
-      .fromJson("""{"value":NaN}""")
+    val withNaN = moshi.adapter(GsonNumber::class.java).lenient().fromJson("""{"value":NaN}""")
     assertThat(withNaN).isEqualTo(GsonNumber(value = Double.NaN))
   }
 
   @Test
   fun lenientWrite() {
     try {
-      moshi.adapter(GsonNumber::class.java)
-        .toJson(GsonNumber(value = Double.NaN))
+      moshi.adapter(GsonNumber::class.java).toJson(GsonNumber(value = Double.NaN))
       fail()
     } catch (err: Exception) {
       assertThat(err.message).startsWith("Numeric values must be finite")
     }
-    val withNaN = moshi.adapter(GsonNumber::class.java)
-      .lenient()
-      .toJson(GsonNumber(value = Double.NaN))
+    val withNaN =
+      moshi.adapter(GsonNumber::class.java).lenient().toJson(GsonNumber(value = Double.NaN))
     assertThat(withNaN).isEqualTo("""{"value":NaN}""")
   }
 
@@ -298,19 +294,20 @@ class MoshiGsonInteropTest {
     val writer = JsonTreeWriter()
     val moshiDelegate = moshi.adapter<MoshiClass>()
     val typeAdapter = MoshiDelegatingTypeAdapter(moshiDelegate)
-    val instance = MoshiClass(
-      SimpleMoshiClass("moshi!"),
-      SimpleGsonClass("gson!"),
-      RegularEnum.TYPE,
-      MoshiEnum.TYPE,
-      GsonEnum.TYPE,
-      listOf(SimpleMoshiClass("moshi!")),
-      listOf(SimpleGsonClass("gson!")),
-      SimpleGenericMoshiClass(MoshiEnum.TYPE),
-      SimpleGenericGsonClass(GsonEnum.TYPE),
-      SimpleMixedGenericGsonClass(SimpleGenericMoshiClass(GsonEnum.TYPE)),
-      SimpleMixedGenericMoshiClass(SimpleGenericGsonClass(MoshiEnum.TYPE))
-    )
+    val instance =
+      MoshiClass(
+        SimpleMoshiClass("moshi!"),
+        SimpleGsonClass("gson!"),
+        RegularEnum.TYPE,
+        MoshiEnum.TYPE,
+        GsonEnum.TYPE,
+        listOf(SimpleMoshiClass("moshi!")),
+        listOf(SimpleGsonClass("gson!")),
+        SimpleGenericMoshiClass(MoshiEnum.TYPE),
+        SimpleGenericGsonClass(GsonEnum.TYPE),
+        SimpleMixedGenericGsonClass(SimpleGenericMoshiClass(GsonEnum.TYPE)),
+        SimpleMixedGenericMoshiClass(SimpleGenericGsonClass(MoshiEnum.TYPE))
+      )
     typeAdapter.write(writer, instance)
     val serialized = writer.get().toString()
 
@@ -324,14 +321,15 @@ class MoshiGsonInteropTest {
     // This test ensures that even if a standard class checker at the bottom can claim a type, a
     // registered one before it will take precedence.
     val preferGsonEnums = EnumClassChecker(GSON)
-    val interop = Moshi.Builder()
-      .addLast(KotlinJsonAdapterFactory())
-      .build()
-      .interopBuilder(GsonBuilder().create())
-      .addClassChecker(preferGsonEnums)
-      .addGsonType<Int>()
-      .logger(::println)
-      .build()
+    val interop =
+      Moshi.Builder()
+        .addLast(KotlinJsonAdapterFactory())
+        .build()
+        .interopBuilder(GsonBuilder().create())
+        .addClassChecker(preferGsonEnums)
+        .addGsonType<Int>()
+        .logger(::println)
+        .build()
     val moshi = interop.moshi
 
     // Even though moshi can handle this by default, we short-circuited it to choose gson anyway
@@ -345,11 +343,12 @@ class MoshiGsonInteropTest {
   }
 
   private inline fun <reified T : JsonAdapter<*>> JsonAdapter<*>.assertIsJsonAdapterInstanceOf() {
-    val adapter = when (this) {
-      is NonNullJsonAdapter<*> -> delegate()
-      is NullSafeJsonAdapter<*> -> delegate()
-      else -> this
-    }
+    val adapter =
+      when (this) {
+        is NonNullJsonAdapter<*> -> delegate()
+        is NullSafeJsonAdapter<*> -> delegate()
+        else -> this
+      }
     assertThat(adapter).isInstanceOf(T::class.java)
   }
 }
@@ -385,26 +384,21 @@ data class GsonClass(
 
 data class Complex(val value: ComplexNestedOne)
 
-@JsonClass(generateAdapter = true)
-data class ComplexNestedOne(val value: ComplexNestedTwo)
+@JsonClass(generateAdapter = true) data class ComplexNestedOne(val value: ComplexNestedTwo)
 
 data class ComplexNestedTwo(val value: ComplexNestedThree)
 
-@JsonClass(generateAdapter = true)
-data class ComplexNestedThree(val value: String)
+@JsonClass(generateAdapter = true) data class ComplexNestedThree(val value: String)
 
-@JsonClass(generateAdapter = true)
-data class SimpleMoshiClass(val value: String)
+@JsonClass(generateAdapter = true) data class SimpleMoshiClass(val value: String)
 
 data class SimpleGsonClass(val value: String)
 
-@JsonClass(generateAdapter = true)
-data class SimpleGenericMoshiClass<T>(val value: T)
+@JsonClass(generateAdapter = true) data class SimpleGenericMoshiClass<T>(val value: T)
 
 data class SimpleGenericGsonClass<T>(val value: T)
 
-@JsonClass(generateAdapter = true)
-data class SimpleMixedGenericMoshiClass<T>(val value: T)
+@JsonClass(generateAdapter = true) data class SimpleMixedGenericMoshiClass<T>(val value: T)
 
 data class SimpleMixedGenericGsonClass<T>(val value: T)
 
@@ -413,13 +407,11 @@ enum class RegularEnum {
 }
 
 enum class MoshiEnum {
-  @Json(name = "_type")
-  TYPE
+  @Json(name = "_type") TYPE
 }
 
 enum class GsonEnum {
-  @SerializedName("__type")
-  TYPE
+  @SerializedName("__type") TYPE
 }
 
 data class GsonNumber(val value: Double? = null)

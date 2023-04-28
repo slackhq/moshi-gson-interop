@@ -24,18 +24,19 @@ import com.squareup.moshi.JsonClass
 
 /** A simple functional interface for indicating when a class should be serialized with Moshi. */
 public fun interface ClassChecker {
-  /**
-   * Returns whichever [Serializer] should be used for [rawType] or null if it has no opinion.
-   */
+  /** Returns whichever [Serializer] should be used for [rawType] or null if it has no opinion. */
   public fun serializerFor(rawType: Class<*>): Serializer?
 }
 
 /** Indicates a serializer to use, either [MOSHI] or [GSON]. */
 public enum class Serializer {
-  MOSHI, GSON
+  MOSHI,
+  GSON
 }
 
-/** Checks if a class is a built-in type (i.e. primitives or String) that Moshi natively supports. */
+/**
+ * Checks if a class is a built-in type (i.e. primitives or String) that Moshi natively supports.
+ */
 public object BuiltInsClassChecker : ClassChecker {
   override fun serializerFor(rawType: Class<*>): Serializer? {
     return if (rawType in MOSHI_BUILTIN_TYPES) MOSHI else null
@@ -86,16 +87,21 @@ public class EnumClassChecker(
       val constants: Array<out Enum<*>> = rawType.enumConstants as Array<out Enum<*>>
       for (constant in constants) {
         @Suppress("SwallowedException")
-        val field = try {
-          rawType.getField(constant.name)
-        } catch (e: NoSuchFieldException) {
-          return null
-        }
+        val field =
+          try {
+            rawType.getField(constant.name)
+          } catch (e: NoSuchFieldException) {
+            return null
+          }
         if (field.isAnnotationPresent(SerializedName::class.java)) {
-          logger?.invoke("🧠 Picking GSON for enum $rawType based on @SerializedName-annotated member $field.")
+          logger?.invoke(
+            "🧠 Picking GSON for enum $rawType based on @SerializedName-annotated member $field."
+          )
           return GSON
         } else if (field.isAnnotationPresent(Json::class.java)) {
-          logger?.invoke("🧠 Picking Moshi for enum $rawType based on @Json-annotated member $field.")
+          logger?.invoke(
+            "🧠 Picking Moshi for enum $rawType based on @Json-annotated member $field."
+          )
           return MOSHI
         }
       }
@@ -143,25 +149,26 @@ internal class StandardClassCheckers(
   }
 }
 
-private val MOSHI_BUILTIN_TYPES = setOf(
-  Boolean::class.javaPrimitiveType,
-  Boolean::class.javaObjectType,
-  Byte::class.javaPrimitiveType,
-  Byte::class.javaObjectType,
-  Char::class.javaPrimitiveType,
-  Character::class.javaObjectType,
-  Double::class.javaPrimitiveType,
-  Double::class.javaObjectType,
-  Float::class.javaPrimitiveType,
-  Float::class.javaObjectType,
-  Int::class.javaPrimitiveType,
-  Integer::class.javaObjectType,
-  Long::class.javaPrimitiveType,
-  Long::class.javaObjectType,
-  Short::class.javaPrimitiveType,
-  Short::class.javaObjectType,
-  Void::class.javaPrimitiveType,
-  Void::class.javaObjectType,
-  String::class.java,
-  Any::class.java
-)
+private val MOSHI_BUILTIN_TYPES =
+  setOf(
+    Boolean::class.javaPrimitiveType,
+    Boolean::class.javaObjectType,
+    Byte::class.javaPrimitiveType,
+    Byte::class.javaObjectType,
+    Char::class.javaPrimitiveType,
+    Character::class.javaObjectType,
+    Double::class.javaPrimitiveType,
+    Double::class.javaObjectType,
+    Float::class.javaPrimitiveType,
+    Float::class.javaObjectType,
+    Int::class.javaPrimitiveType,
+    Integer::class.javaObjectType,
+    Long::class.javaPrimitiveType,
+    Long::class.javaObjectType,
+    Short::class.javaPrimitiveType,
+    Short::class.javaObjectType,
+    Void::class.javaPrimitiveType,
+    Void::class.javaObjectType,
+    String::class.java,
+    Any::class.java
+  )
