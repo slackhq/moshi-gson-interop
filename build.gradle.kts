@@ -97,7 +97,7 @@ spotless {
 
 val moshiVersion = "1.12.0"
 dependencies {
-  implementation("com.google.code.gson:gson:2.8.9")
+  implementation("com.google.code.gson:gson:2.10.1")
   implementation("com.squareup.moshi:moshi:$moshiVersion")
 
   testImplementation("com.squareup.moshi:moshi-kotlin:$moshiVersion")
