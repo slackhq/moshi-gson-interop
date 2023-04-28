@@ -23,7 +23,7 @@ plugins {
   id("org.jetbrains.dokka") version "1.5.31"
   id("com.diffplug.spotless") version "5.17.0"
   id("com.vanniktech.maven.publish") version "0.17.0"
-  id("io.gitlab.arturbosch.detekt") version "1.18.1"
+  id("io.gitlab.arturbosch.detekt") version "1.22.0"
 }
 
 repositories {
