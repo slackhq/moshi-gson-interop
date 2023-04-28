@@ -95,7 +95,7 @@ spotless {
   }
 }
 
-val moshiVersion = "1.12.0"
+val moshiVersion = "1.14.0"
 dependencies {
   implementation("com.google.code.gson:gson:2.10.1")
   implementation("com.squareup.moshi:moshi:$moshiVersion")
