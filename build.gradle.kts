@@ -25,7 +25,7 @@ plugins {
   id("org.jetbrains.dokka") version "1.8.10"
   id("com.diffplug.spotless") version "6.18.0"
   id("com.vanniktech.maven.publish") version "0.25.2"
-  id("io.gitlab.arturbosch.detekt") version "1.22.0"
+  id("io.gitlab.arturbosch.detekt") version "1.23.0"
 }
 
 repositories { mavenCentral() }
