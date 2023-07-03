@@ -24,7 +24,7 @@ plugins {
   kotlin("jvm") version "1.8.22"
   id("org.jetbrains.dokka") version "1.8.20"
   id("com.diffplug.spotless") version "6.19.0"
-  id("com.vanniktech.maven.publish") version "0.25.2"
+  id("com.vanniktech.maven.publish") version "0.25.3"
   id("io.gitlab.arturbosch.detekt") version "1.23.0"
 }
 
