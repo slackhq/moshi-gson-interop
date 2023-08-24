@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-  kotlin("jvm") version "1.9.0"
+  kotlin("jvm") version "1.9.10"
   id("org.jetbrains.dokka") version "1.8.20"
   id("com.diffplug.spotless") version "6.20.0"
   id("com.vanniktech.maven.publish") version "0.25.3"
