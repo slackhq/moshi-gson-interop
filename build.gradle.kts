@@ -21,8 +21,8 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-  kotlin("jvm") version "1.9.21"
-  id("org.jetbrains.dokka") version "1.9.10"
+  kotlin("jvm") version "1.9.23"
+  id("org.jetbrains.dokka") version "1.9.20"
   id("com.diffplug.spotless") version "6.25.0"
   id("com.vanniktech.maven.publish") version "0.25.3"
   id("io.gitlab.arturbosch.detekt") version "1.23.5"
@@ -86,7 +86,7 @@ spotless {
   }
 }
 
-val moshiVersion = "1.15.0"
+val moshiVersion = "1.15.1"
 
 dependencies {
   implementation("com.google.code.gson:gson:2.10.1")
@@ -94,5 +94,5 @@ dependencies {
 
   testImplementation("com.squareup.moshi:moshi-kotlin:$moshiVersion")
   testImplementation("junit:junit:4.13.2")
-  testImplementation("com.google.truth:truth:1.1.5")
+  testImplementation("com.google.truth:truth:1.4.1")
 }
