@@ -94,5 +94,5 @@ dependencies {
 
   testImplementation("com.squareup.moshi:moshi-kotlin:$moshiVersion")
   testImplementation("junit:junit:4.13.2")
-  testImplementation("com.google.truth:truth:1.4.4")
+  testImplementation("com.google.truth:truth:1.4.5")
 }
